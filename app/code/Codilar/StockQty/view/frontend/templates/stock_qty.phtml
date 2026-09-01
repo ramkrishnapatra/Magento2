@@ -1,0 +1,93 @@
+<div id="custom-stock-qty" class="custom-stock-wrapper" style="display: none; margin-bottom: 10px;">
+    <span class="stock-label">Available Quantity: </span>
+    <strong class="stock-qty-value">0</strong>
+</div>
+
+<script>
+    require(['jquery'], function ($) {
+        'use strict';
+
+        $(document).ready(function () {
+            var swatchElement = $('[data-role=swatch-options]');
+            var stockContainer = $('#custom-stock-qty');
+            var stockValueSpan = stockContainer.find('.stock-qty-value');
+
+            function updateStockDisplay() {
+                var widget = swatchElement.data('mageSwatchRenderer') || swatchElement.data('mage-SwatchRenderer');
+
+                if (!widget || !widget.options || !widget.options.jsonConfig) {
+                    stockContainer.hide();
+                    return;
+                }
+
+                var jsonConfig = widget.options.jsonConfig;
+                var childStock = jsonConfig.child_stock_qty || {};
+                var indexMapping = jsonConfig.index || {}; // { productId: { attrId: optId } }
+
+                // 1. Current selected options collect karein
+                var selectedOptions = {};
+                var hasSelection = false;
+
+                swatchElement.find('.swatch-attribute').each(function () {
+                    var attributeId = $(this).attr('data-attribute-id') || $(this).data('attributeId');
+                    var selectedOptionId = $(this).attr('data-option-selected');
+
+                    if (attributeId && selectedOptionId) {
+                        selectedOptions[attributeId] = selectedOptionId;
+                        hasSelection = true;
+                    }
+                });
+
+                // Agar koi swatch select nahi hai to hide rakhein
+                if (!hasSelection) {
+                    stockValueSpan.text('0');
+                    stockContainer.hide();
+                    return;
+                }
+
+                // 2. Filter aur Sum calculation
+                var totalStock = 0;
+                var matchFound = false;
+
+                $.each(indexMapping, function (productId, attributes) {
+                    var isMatched = true;
+
+                    // Check karein ki ye child product current selected filters se match karta hai ya nahi
+                    $.each(selectedOptions, function (attrId, selectedOptId) {
+                        if (attributes[attrId] != selectedOptId) {
+                            isMatched = false;
+                            return false; // Break current loop
+                        }
+                    });
+
+                    // Agar product match hua, to uska stock total me add karein
+                    if (isMatched && childStock[productId] !== undefined) {
+                        totalStock += parseInt(childStock[productId], 10);
+                        matchFound = true;
+                    }
+                });
+
+                // 3. UI Update
+                if (matchFound) {
+                    stockValueSpan.text(totalStock);
+                    stockContainer.show();
+                } else {
+                    stockValueSpan.text('0');
+                    stockContainer.hide();
+                }
+            }
+
+
+            swatchElement.on('spConfig:initialize change click', '.swatch-option', function () {
+                setTimeout(function () {
+                    updateStockDisplay();
+                }, 50); // DOM attribute update hone ke liye 50ms ka buffer
+            });
+
+
+            swatchElement.on('spConfig:initialize', function () {
+                updateStockDisplay();
+            });
+        });
+    });
+</script>

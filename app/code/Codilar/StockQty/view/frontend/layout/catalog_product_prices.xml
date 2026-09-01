@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<layout xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/layout_generic.xsd">
+    <referenceBlock name="render.product.prices">
+<!--        vendor/magento/module-catalog/view/base/layout/catalog_product_prices.xml-->
+        <arguments>
+            <argument name="default" xsi:type="array">
+                <item name="prices" xsi:type="array">
+                    <item name="final_price" xsi:type="array">
+                        <item name="render_template" xsi:type="string">Codilar_StockQty::final_price.phtml</item>
+                        <item name="render_class" xsi:type="string">Codilar\StockQty\Block\FinalPriceBox</item>
+                        <item name="template" xsi:type="string">Codilar_StockQty::final_price.phtml</item>
+                    </item>
+                </item>
+<!--                vendor/magento/module-configurable-product/view/base/layout/catalog_product_prices.xml-->
+            </argument>
+            <argument name="configurable" xsi:type="array">
+                <item name="prices" xsi:type="array">
+                    <item name="final_price" xsi:type="array">
+                        <item name="render_template" xsi:type="string">Codilar_StockQty::final_price.phtml</item>
+                        <item name="render_class" xsi:type="string">Codilar\StockQty\Block\FinalPriceBox</item>
+                        <item name="template" xsi:type="string">Codilar_StockQty::final_price.phtml</item>
+                    </item>
+                    <item name="configured_price" xsi:type="array">
+                        <item name="render_template" xsi:type="string">Codilar_StockQty::final_price.phtml</item>
+                        <item name="render_class" xsi:type="string">Codilar\StockQty\Block\FinalPriceBox</item>
+                        <item name="template" xsi:type="string">Codilar_StockQty::final_price.phtml</item>
+                    </item>
+                </item>
+            </argument>
+        </arguments>
+    </referenceBlock>
+</layout>

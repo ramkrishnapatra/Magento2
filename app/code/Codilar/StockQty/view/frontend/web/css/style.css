@@ -1,0 +1,64 @@
+
+    /* RESET DEFAULT MAGENTO PSEUDO-ELEMENTS */
+.custom-pricing-wrapper .price-container:before,
+.custom-pricing-wrapper .price-container:after,
+.custom-pricing-wrapper .price-wrapper:before,
+.custom-pricing-wrapper .price-wrapper:after,
+.custom-pricing-wrapper .old-price:before,
+.custom-pricing-wrapper .old-price:after {
+    content: none !important;
+    display: none !important;
+}
+
+/* MAIN CONTAINER */
+.custom-pricing-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0;
+    flex-wrap: wrap;
+}
+
+/* FINAL / SPECIAL PRICE */
+.custom-pricing-wrapper .final-price-green,
+.custom-pricing-wrapper .final-price-green .price {
+    color: #1b8a36 !important;
+    font-weight: 700 !important;
+    font-size: 20px !important;
+    line-height: 1.2 !important;
+}
+
+/* NORMAL PRICE (WITHOUT DISCOUNT) */
+.custom-pricing-wrapper .normal-price,
+.custom-pricing-wrapper .normal-price .price {
+    color: #222222 !important;
+    font-weight: 700 !important;
+    font-size: 20px !important;
+    line-height: 1.2 !important;
+}
+
+/* DISCOUNT BADGE */
+.custom-pricing-wrapper .discount-badge {
+    background-color: #ffebe8;
+    color: #d9251d;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 6px;
+    border-radius: 4px;
+    border: 1px solid #ffd2cd;
+    line-height: 1;
+    display: inline-block;
+}
+
+/* BASE / STRIKE-THROUGH PRICE */
+.custom-pricing-wrapper .base-strike-price,
+.custom-pricing-wrapper .base-strike-price .price {
+    color: #888888 !important;
+    font-size: 15px !important;
+    font-weight: 400 !important;
+    line-height: 1.2 !important;
+    text-decoration: line-through !important;
+    -webkit-text-decoration-color: #d9251d !important;
+    text-decoration-color: #d9251d !important;
+    text-decoration-thickness: 1.5px !important;
+}

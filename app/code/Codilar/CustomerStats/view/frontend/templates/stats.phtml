@@ -1,0 +1,34 @@
+<?php
+/** @var \Codilar\CustomerStats\Block\Stats $block */
+$stats = $block->getCustomerOrderStats();
+?>
+<div class="block block-order-summary">
+    <div class="block-title">
+        <h2><?= $block->escapeHtml(__('Order Summary')) ?></h2>
+    </div>
+    <div class="block-content">
+        <div class="table-wrapper">
+            <table class="data table" id="customer-order-stats-table">
+                <caption class="table-caption"><?= $block->escapeHtml(__('Order Summary')) ?></caption>
+                <thead>
+                <tr>
+                    <th scope="col" class="col"><?= $block->escapeHtml(__('Total Number of Orders')) ?></th>
+                    <th scope="col" class="col"><?= $block->escapeHtml(__('Total Amount Spent')) ?></th>
+                    <th scope="col" class="col"><?= $block->escapeHtml(__('Last Order')) ?></th>
+                    <th scope="col" class="col"><?= $block->escapeHtml(__('Number of Completed Orders')) ?></th>
+                    <th scope="col" class="col"><?= $block->escapeHtml(__('Number of Cancelled Orders')) ?></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td data-th="<?= $block->escapeHtml(__('Total Number of Orders')) ?>" class="col"><?= (int)($stats['total_orders'] ?? 0) ?></td>
+                    <td data-th="<?= $block->escapeHtml(__('Total Amount Spent')) ?>" class="col"><?= $block->escapeHtml($stats['total_spent'] ?? '0') ?></td>
+                    <td data-th="<?= $block->escapeHtml(__('Last Order')) ?>" class="col"><?= $block->escapeHtml($stats['last_order'] ?? 'N/A') ?></td>
+                    <td data-th="<?= $block->escapeHtml(__('Number of Completed Orders')) ?>" class="col"><?= (int)($stats['completed_orders'] ?? 0) ?></td>
+                    <td data-th="<?= $block->escapeHtml(__('Number of Cancelled Orders')) ?>" class="col"><?= (int)($stats['canceled_orders'] ?? 0) ?></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

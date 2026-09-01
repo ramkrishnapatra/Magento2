@@ -1,0 +1,83 @@
+<?php
+/** @var \Codilar\StockQty\Block\FinalPriceBox $block */
+
+$productId = (int) $block->getSaleableItem()->getId();
+
+// Retrieve values directly from your custom block methods
+$hasDiscount = $block->hasDiscount();
+$discountPercent = $block->getDiscountPercent();
+$regularPrice = $block->getBaseRegularPrice();
+$finalPrice = $block->getActualFinalPrice();
+
+$finalPriceModel = $block->getPriceType('final_price');
+$regularPriceModel = $block->getPriceType('regular_price');
+
+// Currency Formatter Helper
+$priceHelper = \Magento\Framework\App\ObjectManager::getInstance()
+    ->get(\Magento\Framework\Pricing\Helper\Data::class);
+?>
+<link rel="stylesheet" type="text/css" href="<?= $block->getViewFileUrl('Codilar_StockQty::css/style.css') ?>" />
+
+
+
+<div
+    class="price-box price-final_price"
+    data-role="priceBox"
+    data-product-id="<?= $productId ?>"
+    data-price-box="product-id-<?= $productId ?>"
+>
+    <div class="custom-pricing-wrapper">
+        <!-- 1. FINAL PRICE -->
+        <span class="price-container price-final_price tax weee">
+            <span
+                id="product-price-<?= $productId ?>"
+                data-price-amount="<?= $finalPrice ?>"
+                data-price-type="finalPrice"
+                class="price-wrapper <?= $hasDiscount ? 'final-price-green' : 'normal-price' ?>"
+            >
+                <?php if ($finalPriceModel && $finalPriceModel->getAmount()): ?>
+                    <?= $block->renderAmount(
+                        $finalPriceModel->getAmount(),
+                        [
+                            'price_id'          => $block->getPriceId('product-price-' . $productId),
+                            'include_container' => false,
+                            'schema'            => false
+                        ]
+                    ) ?>
+                <?php else: ?>
+                    <span class="price"><?= $priceHelper->currency($finalPrice, true, false) ?></span>
+                <?php endif; ?>
+            </span>
+        </span>
+
+        <?php if ($hasDiscount): ?>
+            <!-- 2. DISCOUNT BADGE -->
+            <span class="discount-badge">
+                <?= $discountPercent ?>% OFF
+            </span>
+
+            <!-- 3. BASE / REGULAR STRIKE-THROUGH PRICE -->
+            <span class="old-price">
+                <span
+                    id="old-price-<?= $productId ?>"
+                    data-price-amount="<?= $regularPrice ?>"
+                    data-price-type="oldPrice"
+                    class="price-wrapper base-strike-price"
+                >
+                    <?php if ($regularPriceModel && $regularPriceModel->getAmount() && $regularPriceModel->getAmount()->getValue() > $finalPrice): ?>
+                        <?= $block->renderAmount(
+                            $regularPriceModel->getAmount(),
+                            [
+                                'price_id'          => $block->getPriceId('old-price-' . $productId),
+                                'include_container' => false,
+                                'skip_adjustments'  => true
+                            ]
+                        ) ?>
+                    <?php else: ?>
+                        <span class="price"><?= $priceHelper->currency($regularPrice, true, false) ?></span>
+                    <?php endif; ?>
+                </span>
+            </span>
+        <?php endif; ?>
+    </div>
+</div>
