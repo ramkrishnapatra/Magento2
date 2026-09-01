@@ -1,0 +1,54 @@
+<?php
+/** @var \Magento\Framework\View\Element\Template $block */
+/** @var \Magento\Framework\Escaper $escaper */
+$autoDismissSeconds = 5;
+?>
+<!-- Default Magento Messages container -->
+<div data-placeholder="messages"></div>
+<div data-bind="scope: 'messages'">
+    <!-- ko template: getTemplate() --><!-- /ko -->
+</div>
+
+<script type="text/x-magento-init">
+    {
+        "*": {
+            "Magento_Ui/js/core/app": {
+                "components": {
+                    "messages": {
+                       "component": "Magento_Theme/js/view/messages"
+                    }
+                }
+            }
+        }
+    }
+</script>
+
+<!-- Custom Add-to-Cart Notification Popup -->
+<div id="custom-cart-popup"
+     class="custom-cart-notification"
+     style="display: none;"
+     data-mage-init='{"js/cart-popup": {"autoDismissSeconds": <?= (int) $autoDismissSeconds ?>}}'>
+    <div class="cart-popup-content">
+        <button type="button" class="close-popup" id="close-cart-popup">&times;</button>
+
+        <div class="popup-header">
+            <span class="popup-title"><?= $escaper->escapeHtml(__('Added to Cart Successfully!')) ?></span>
+        </div>
+
+        <div class="popup-body">
+            <div class="product-thumb">
+                <img id="cart-popup-img" src="" alt="<?= $escaper->escapeHtmlAttr(__('Product Image')) ?>" />
+            </div>
+            <div class="product-info">
+                <div class="product-name" id="cart-popup-name"></div>
+                <div class="product-price" id="cart-popup-price"></div>
+            </div>
+        </div>
+
+        <div class="popup-actions">
+            <a href="<?= $escaper->escapeUrl($block->getUrl('checkout/cart')) ?>" class="action primary">
+                <?= $escaper->escapeHtml(__('View Cart')) ?>
+            </a>
+        </div>
+    </div>
+</div>
