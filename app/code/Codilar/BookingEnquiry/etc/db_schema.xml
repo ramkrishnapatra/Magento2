@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/db_schema.xsd">
+    <table name="booking_enquiry" resource="default" engine="innodb" comment="Customer Booking Enquiries">
+        <column xsi:type="int" name="entity_id" unsigned="true" nullable="false" identity="true" comment="ID"/>
+        <column xsi:type="varchar" name="phone_number" nullable="false" length="20" comment="Customer Phone"/>
+        <column xsi:type="varchar" name="preferred_slot" nullable="false" length="100" comment="Time Slot"/>
+        <column xsi:type="varchar" name="status" nullable="false" length="20" default="pending" comment="Status"/>
+        <column xsi:type="timestamp" name="created_at" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="entity_id"/>
+        </constraint>
+    </table>
+</schema>

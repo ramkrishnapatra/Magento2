@@ -52,17 +52,22 @@
                 $.each(indexMapping, function (productId, attributes) {
                     var isMatched = true;
 
-                    // Check karein ki ye child product current selected filters se match karta hai ya nahi
+                    // Check karein ki ye child product current selected filters se match karta hai
                     $.each(selectedOptions, function (attrId, selectedOptId) {
-                        if (attributes[attrId] != selectedOptId) {
+                        if (attributes[attrId] !== selectedOptId) {
                             isMatched = false;
                             return false; // Break current loop
                         }
                     });
 
-                    // Agar product match hua, to uska stock total me add karein
+                    // Agar product match hua, to uska stock add karein
                     if (isMatched && childStock[productId] !== undefined) {
-                        totalStock += parseInt(childStock[productId], 10);
+                        // Object structure { qty: ..., sku: ... } se safe extraction
+                        var qty = typeof childStock[productId] === 'object'
+                            ? childStock[productId].qty
+                            : childStock[productId];
+
+                        totalStock += parseInt(qty, 10) || 0;
                         matchFound = true;
                     }
                 });
@@ -77,13 +82,11 @@
                 }
             }
 
-
             swatchElement.on('spConfig:initialize change click', '.swatch-option', function () {
                 setTimeout(function () {
                     updateStockDisplay();
-                }, 50); // DOM attribute update hone ke liye 50ms ka buffer
+                }, 60);
             });
-
 
             swatchElement.on('spConfig:initialize', function () {
                 updateStockDisplay();

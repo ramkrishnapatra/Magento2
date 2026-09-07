@@ -1,0 +1,65 @@
+<?php
+/** @var Listing $block */
+
+use Codilar\BookingEnquiry\Block\Listing;
+
+$enquiries = $block->getEnquiries();
+?>
+
+<div style="max-width: 960px; margin: 30px auto; font-family: sans-serif;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="margin: 0;">Customer Booking Enquiries (FIFO)</h2>
+        <a href="<?= $block->getUrl('booking/index/listing') ?>"
+           class="action secondary"
+           style="padding: 7px 15px; text-decoration: none; border: 1px solid #ccc; border-radius: 4px; background: #fff; color: #333;">
+            Refresh
+        </a>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; border: 1px solid #e1e1e1;">
+        <thead>
+        <tr style="background-color: #f8f8f8; border-bottom: 2px solid #ddd;">
+            <th style="padding: 12px;">#ID</th>
+            <th style="padding: 12px;">Phone Number</th>
+            <th style="padding: 12px;">Preferred Slot</th>
+            <th style="padding: 12px;">Submitted At</th>
+            <th style="padding: 12px;">Status</th>
+            <th style="padding: 12px; text-align: center;">Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        <?php if (!empty($enquiries)): ?>
+            <?php foreach ($enquiries as $row): ?>
+                <tr style="border-bottom: 1px solid #eee; background-color: <?= $row['status'] === 'handled' ? '#fcfcfc' : '#ffffff' ?>;">
+                    <td style="padding: 12px;"><?= (int)$row['entity_id'] ?></td>
+                    <td style="padding: 12px; font-weight: bold;"><?= $block->escapeHtml($row['phone_number']) ?></td>
+                    <td style="padding: 12px;"><?= $block->escapeHtml($row['preferred_slot']) ?></td>
+                    <td style="padding: 12px; color: #666;"><?= $block->escapeHtml($row['created_at']) ?></td>
+                    <td style="padding: 12px;">
+                        <?php if ($row['status'] === 'handled'): ?>
+                            <span style="background: #e6f4ea; color: #137333; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 12px;">Handled</span>
+                        <?php else: ?>
+                            <span style="background: #fef7e0; color: #b06000; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 12px;">Pending</span>
+                        <?php endif; ?>
+                    </td>
+                    <td style="padding: 12px; text-align: center;">
+                        <?php if ($row['status'] === 'pending'): ?>
+                            <a href="<?= $block->getUrl('booking/index/updatestatus', ['id' => $row['entity_id']]) ?>"
+                               onclick="return confirm('Mark enquiry #<?= (int)$row['entity_id'] ?> as Handled?');"
+                               style="background: #1979c3; color: #fff; padding: 6px 14px; text-decoration: none; border-radius: 3px; font-size: 12px; font-weight: 600; display: inline-block;">
+                                Mark Done
+                            </a>
+                        <?php else: ?>
+                            <span style="color: #999;">—</span>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <tr>
+                <td colspan="6" style="padding: 24px; text-align: center; color: #777;">No booking enquiries found in queue.</td>
+            </tr>
+        <?php endif; ?>
+        </tbody>
+    </table>
+</div>

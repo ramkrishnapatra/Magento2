@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <!-- Data Model Interface Preference -->
+    <preference for="Codilar\ProductEnquiry\Api\Data\EnquiryInterface"
+                type="Codilar\ProductEnquiry\Model\Enquiry"/>
+
+    <!-- Repository Interface Preference -->
+    <preference for="Codilar\ProductEnquiry\Api\EnquiryRepositoryInterface"
+                type="Codilar\ProductEnquiry\Model\EnquiryRepository"/>
+
+    <!-- 2. Custom Console Command Registration -->
+    <type name="Magento\Framework\Console\CommandList">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="custom_enquiry_clean" xsi:type="object">Codilar\ProductEnquiry\Console\Command\CleanEnquiriesCommand</item>
+            </argument>
+        </arguments>
+    </type>
+</config>

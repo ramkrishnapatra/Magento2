@@ -1,0 +1,19 @@
+{
+    "codilar_custom_stock_alert": {
+        "column": {
+            "alert_id": true,
+            "customer_id": true,
+            "product_id": true,
+            "customer_email": true,
+            "status": true,
+            "created_at": true,
+            "notified_at": true
+        },
+        "index": {
+            "CODILAR_CUSTOM_STOCK_ALERT_CUSTOMER_ID_PRODUCT_ID_STATUS": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
+    }
+}

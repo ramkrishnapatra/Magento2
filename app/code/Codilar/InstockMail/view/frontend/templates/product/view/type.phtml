@@ -1,0 +1,90 @@
+<?php
+/** @var $block \Magento\ProductAlert\Block\Product\View */
+
+$product = $block->getProduct();
+$productId = ($product && $product->getId()) ? (int)$product->getId() : 0;
+?>
+<div class="product alert stock">
+    <a href="javascript:void(0);"
+       id="custom-stock-alert-btn"
+       data-product-id="<?= (int)$productId ?>"
+       title="<?= $block->escapeHtmlAttr(__('Notify me when this product is in stock')) ?>"
+       class="action alert">
+        <?= $block->escapeHtml(__('Notify me when this product is in stock')) ?>
+    </a>
+</div>
+
+<script>
+    require(['jquery', 'mage/url'], function ($, urlBuilder) {
+        'use strict';
+
+        function renderLumaMessage(type, messageText) {
+            let msgClass = (type === 'error') ? 'message-error error message' :
+                ((type === 'notice') ? 'message-notice notice message' : 'message-success success message');
+
+            const messageHtml = `
+            <div class="messages">
+                <div class="${msgClass}" data-ui-id="message-${type}">
+                    <div>${messageText}</div>
+                </div>
+            </div>
+            `;
+
+            let $messagesContainer = $('.page.messages');
+            if (!$messagesContainer.length) {
+                $messagesContainer = $('<div class="page messages"></div>');
+                if ($('#maincontent').length) {
+                    $('#maincontent').prepend($messagesContainer);
+                } else {
+                    $('.columns').prepend($messagesContainer);
+                }
+            }
+
+            $messagesContainer.empty().append(messageHtml).show();
+            $('html, body').animate({ scrollTop: 0 }, 300);
+
+            setTimeout(function () {
+                $messagesContainer.find('.message').fadeOut(500, function () { $(this).remove(); });
+            }, 7000);
+        }
+
+        $(document).on('click', '#custom-stock-alert-btn', function (e) {
+            e.preventDefault();
+
+            let productId = $(this).data('product-id');
+            if (!productId || productId === 0) {
+                productId = $('input[name="product"]').val();
+            }
+
+            if (!productId) {
+                renderLumaMessage('error', 'Unable to find Product ID.');
+                return;
+            }
+
+            $('body').trigger('processStart');
+
+            $.ajax({
+                url: urlBuilder.build('customalert/stock/add'),
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    product_id: productId,
+                    form_key: $('input[name="form_key"]').val()
+                },
+                complete: function () {
+                    $('body').trigger('processStop');
+                },
+                success: function (response) {
+                    if (response.success) {
+                        renderLumaMessage(response.is_notice ? 'notice' : 'success', response.message);
+                    } else {
+                        renderLumaMessage('error', response.message);
+                    }
+                },
+                error: function () {
+                    renderLumaMessage('error', 'Failed to subscribe.');
+                }
+            });
+        });
+    });
+</script>

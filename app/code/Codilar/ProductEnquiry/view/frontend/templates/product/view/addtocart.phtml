@@ -1,0 +1,301 @@
+<?php
+/** @var $block View */
+/** @var Escaper $escaper */
+use Magento\Catalog\Block\Product\View;
+use Magento\Catalog\Model\Product\Type;
+use Magento\Framework\Escaper;
+
+$_product = $block->getProduct();
+$productType = $_product->getTypeId();
+$isSimple = ($productType === Type::TYPE_SIMPLE);
+
+$initialTitle = $isSimple ? __('Product Enquiry') : __('Add to Cart');
+$initialEnquiryState = $isSimple ? 'true' : 'false';
+?>
+
+<?php if ($_product->isSaleable()) :?>
+    <div class="box-tocart">
+        <div class="fieldset">
+            <?php if ($block->shouldRenderQuantity()) :?>
+                <div class="field qty">
+                    <label class="label" for="qty"><span><?= $escaper->escapeHtml(__('Qty')) ?></span></label>
+                    <div class="control">
+                        <input type="number"
+                               name="qty"
+                               id="qty"
+                               min="1"
+                               value="<?= (int)$block->getProductDefaultQty() ?>"
+                               title="<?= $escaper->escapeHtmlAttr(__('Qty')) ?>"
+                               class="input-text qty"
+                               data-validate="<?= $escaper->escapeHtml(json_encode($block->getQuantityValidators())) ?>"
+                        />
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <div class="actions">
+                <button type="submit"
+                        title="<?= $escaper->escapeHtmlAttr($initialTitle) ?>"
+                        class="action primary tocart"
+                        id="product-addtocart-button"
+                        data-product-type="<?= $escaper->escapeHtmlAttr($productType) ?>"
+                        data-simple-sku="<?= $escaper->escapeHtmlAttr($_product->getSku()) ?>"
+                        data-is-enquiry="<?= $initialEnquiryState ?>"
+                        data-selected-child-id="">
+                    <span id="btn-text-holder"><?= $escaper->escapeHtml($initialTitle) ?></span>
+                </button>
+                <?= $block->getChildHtml('', true) ?>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>
+
+<!-- POPUP MODAL HTML -->
+<div id="enquiry-modal-popup" style="display:none;">
+    <form id="enquiry-modal-form" style="max-width: 450px; margin: 0 auto;">
+        <input type="hidden" name="form_key" value="<?= $escaper->escapeHtmlAttr($block->getBlockHtml('formkey')) ?>" />
+
+        <div class="field" style="margin-bottom: 12px;">
+            <label style="font-weight: bold; display: block; margin-bottom: 4px;">SKU:</label>
+            <input type="text" id="modal-sku" name="sku" readonly style="width: 100%; background: #f0f0f0; padding: 6px; border: 1px solid #ccc;" />
+        </div>
+
+        <div class="field required" style="margin-bottom: 12px;">
+            <label style="font-weight: bold; display: block; margin-bottom: 4px;">Name: <span style="color: red;">*</span></label>
+            <input type="text" id="modal-name" name="name" required class="input-text" style="width: 100%; padding: 6px; border: 1px solid #ccc;" />
+        </div>
+
+        <div class="field required" style="margin-bottom: 12px;">
+            <label style="font-weight: bold; display: block; margin-bottom: 4px;">Email: <span style="color: red;">*</span></label>
+            <input type="email" id="modal-email" name="email" required class="input-text" style="width: 100%; padding: 6px; border: 1px solid #ccc;" />
+        </div>
+
+        <div class="field required" style="margin-bottom: 12px;">
+            <label style="font-weight: bold; display: block; margin-bottom: 4px;">Quantity:</label>
+            <input type="number" id="modal-qty" name="qty" min="1" value="1" class="input-text" style="width: 100%; padding: 6px; border: 1px solid #ccc;" />
+        </div>
+
+        <div class="field required" style="margin-bottom: 15px;">
+            <label style="font-weight: bold; display: block; margin-bottom: 4px;">Address: <span style="color: red;">*</span></label>
+            <textarea id="modal-address" name="address" rows="3" required class="input-text" style="width: 100%; padding: 6px; resize: vertical; border: 1px solid #ccc;"></textarea>
+        </div>
+
+        <div class="actions-toolbar" style="margin-top: 15px; text-align: right;">
+            <button type="button" id="modal-submit-btn" class="action primary">
+                <span>Submit Enquiry</span>
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    require([
+        'jquery',
+        'Magento_Ui/js/modal/modal',
+        'mage/url'
+    ], function ($, modal, urlBuilder) {
+        'use strict';
+
+        $(document).ready(function () {
+            const $button = $('#product-addtocart-button');
+            const $btnSpan = $('#btn-text-holder');
+            const modalPopup = $('#enquiry-modal-popup');
+            const productType = $button.data('product-type');
+
+            // 1. Popup Initialize
+            if (modalPopup.length) {
+                modal({
+                    type: 'popup',
+                    responsive: true,
+                    innerScroll: true,
+                    title: 'Product Enquiry Form',
+                    buttons: []
+                }, modalPopup);
+            }
+
+            // 2. Configurable Product Swatch Logic
+            if (productType === 'configurable') {
+                const syncConfigurableState = function () {
+                    let selectedChildId = $('input[name="selected_configurable_option"]').val();
+
+                    if (!selectedChildId) {
+                        const swatchWidget = $('[data-role=swatch-options]').data('mageSwatchRenderer')
+                            || $('[data-role=swatch-options]').data('mage-SwatchRenderer');
+                        if (swatchWidget && typeof swatchWidget.getProduct === 'function') {
+                            selectedChildId = swatchWidget.getProduct();
+                        }
+                    }
+
+                    if (selectedChildId) {
+                        $button.attr('data-is-enquiry', 'true');
+                        $button.attr('data-selected-child-id', selectedChildId);
+                        $button.attr('title', 'Product Enquiry');
+                        if ($btnSpan.text() !== 'Product Enquiry') {
+                            $btnSpan.text('Product Enquiry');
+                        }
+                        $button.prop('disabled', false);
+                    } else {
+                        $button.attr('data-is-enquiry', 'false');
+                        $button.attr('data-selected-child-id', '');
+                        $button.attr('title', 'Add to Cart');
+                        if ($btnSpan.text() !== 'Add to Cart') {
+                            $btnSpan.text('Add to Cart');
+                        }
+                    }
+                };
+
+                $(document).on('click change', '.swatch-option, .swatch-attribute-select', function () {
+                    setTimeout(syncConfigurableState, 60);
+                    setTimeout(syncConfigurableState, 200);
+                });
+
+                const targetNode = document.getElementById('btn-text-holder');
+                if (targetNode) {
+                    const observer = new MutationObserver(function () {
+                        const isEnquiry = $button.attr('data-is-enquiry') === 'true';
+                        if (isEnquiry && $btnSpan.text() !== 'Product Enquiry') {
+                            $btnSpan.text('Product Enquiry');
+                            $button.attr('title', 'Product Enquiry');
+                        }
+                    });
+                    observer.observe(targetNode, { childList: true, characterData: true, subtree: true });
+                }
+            }
+
+            // 3. Open Modal and Fill Data
+            $button.on('click', function (e) {
+                const isEnquiry = $(this).attr('data-is-enquiry') === 'true';
+
+                if (isEnquiry) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+
+                    let sku = '';
+
+                    if (productType === 'simple') {
+                        sku = $(this).data('simple-sku');
+                    } else if (productType === 'configurable') {
+                        const selectedChildId = $(this).attr('data-selected-child-id');
+                        const swatchWidget = $('[data-role=swatch-options]').data('mageSwatchRenderer')
+                            || $('[data-role=swatch-options]').data('mage-SwatchRenderer');
+
+                        if (swatchWidget && swatchWidget.options && swatchWidget.options.jsonConfig) {
+                            const jsonConfig = swatchWidget.options.jsonConfig;
+                            if (jsonConfig.child_stock_qty && jsonConfig.child_stock_qty[selectedChildId]) {
+                                sku = jsonConfig.child_stock_qty[selectedChildId].sku;
+                            }
+                        }
+                    }
+
+                    const currentQty = $('#qty').val() || 1;
+                    $('#modal-sku').val(sku);
+                    $('#modal-qty').val(currentQty);
+
+                    modalPopup.modal('openModal');
+                    return false;
+                }
+            });
+
+            // Native Luma Banner Renderer
+            function renderLumaMessage(type, messageText) {
+                const isSuccess = (type === 'success');
+                const msgClass = isSuccess ? 'message-success success message' : 'message-error error message';
+
+                const messageHtml = `
+                    <div class="messages">
+                        <div class="${msgClass}" data-ui-id="message-${type}">
+                            <div>${messageText}</div>
+                        </div>
+                    </div>
+                `;
+
+                let $messagesContainer = $('.page.messages');
+
+                if (!$messagesContainer.length) {
+                    $messagesContainer = $('<div class="page messages"></div>');
+                    if ($('#maincontent').length) {
+                        $('#maincontent').prepend($messagesContainer);
+                    } else {
+                        $('.columns').prepend($messagesContainer);
+                    }
+                }
+
+                $messagesContainer.empty().append(messageHtml).show();
+
+                $('html, body').animate({
+                    scrollTop: 0
+                }, 300);
+
+                setTimeout(function () {
+                    $messagesContainer.find('.message').fadeOut(500, function () {
+                        $(this).remove();
+                    });
+                }, 7000);
+            }
+
+            // 4. AJAX Submission Handler
+            $(document).on('click', '#modal-submit-btn', function (e) {
+                e.preventDefault();
+
+                const sku = $('#modal-sku').val();
+                const name = $('#modal-name').val();
+                const email = $('#modal-email').val();
+                const qty = $('#modal-qty').val();
+                const address = $('#modal-address').val();
+
+                if (!name || !email || !address) {
+                    modalPopup.modal('closeModal');
+                    renderLumaMessage('error', 'Please fill all required fields (*)');
+                    return;
+                }
+
+                const postUrl = urlBuilder.build('productenquiry/index/productenquiry');
+
+                $('body').trigger('processStart');
+
+                $.ajax({
+                    url: postUrl,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        sku: sku,
+                        name: name,
+                        email: email,
+                        qty: qty,
+                        address: address,
+                        form_key: $('input[name="form_key"]').val()
+                    },
+                    complete: function () {
+                        $('body').trigger('processStop');
+                    },
+                    success: function (response) {
+                        modalPopup.modal('closeModal');
+
+                        if (response.success) {
+                            renderLumaMessage('success', response.message);
+
+                            $('#modal-name').val('');
+                            $('#modal-email').val('');
+                            $('#modal-address').val('');
+                        } else {
+                            renderLumaMessage('error', response.message);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        modalPopup.modal('closeModal');
+                        console.error('AJAX Error: ', error);
+                        renderLumaMessage('error', 'Error submitting enquiry. Please try again later.');
+                    }
+                });
+            });
+        });
+    });
+</script>
+
+<script type="text/x-magento-init">
+    {
+        "#product_addtocart_form": {
+            "Magento_Catalog/js/validate-product": {}
+        }
+    }
+</script>

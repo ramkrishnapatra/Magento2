@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="codilar_custom_stock_alert" resource="default" engine="innodb" comment="Custom Stock Alert Subscriptions">
+        <column xsi:type="int" name="alert_id" padding="10" unsigned="true" nullable="false" identity="true" comment="Alert ID"/>
+        <column xsi:type="int" name="customer_id" padding="10" unsigned="true" nullable="false" comment="Customer ID"/>
+        <column xsi:type="int" name="product_id" padding="10" unsigned="true" nullable="false" comment="Product ID"/>
+        <column xsi:type="varchar" name="customer_email" length="255" nullable="false" comment="Customer Email"/>
+        <column xsi:type="varchar" name="status" length="32" nullable="false" default="pending" comment="Alert Status (pending, handled)"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <column xsi:type="timestamp" name="notified_at" on_update="false" nullable="true" comment="Notified At"/>
+
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="alert_id"/>
+        </constraint>
+        <index referenceId="CODILAR_STOCK_ALERT_CUSTOMER_PRODUCT_STATUS" indexType="btree">
+            <column name="customer_id"/>
+            <column name="product_id"/>
+            <column name="status"/>
+        </index>
+    </table>
+</schema>

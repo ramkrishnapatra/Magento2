@@ -27,7 +27,11 @@ class ConfigurablePlugin
         foreach ($subject->getAllowProducts() as $childProduct) { //its returning all enable child products
             $stockItem = $this->stockRegistry->getStockItem($childProduct->getId());
             //stockRegistry class ka getStock will return StockItemInterface and StockItemInterface contain all data about product
-            $stockData[$childProduct->getId()] = (int)$stockItem->getQty();//StockItemInterface contain this functions
+            $stockData[$childProduct->getId()] = [
+                'qty' => (int)$stockItem->getQty(),
+                'sku' => $childProduct->getSku()
+            ];
+            //StockItemInterface contain this functions
         }
 
         $config['child_stock_qty'] = $stockData;

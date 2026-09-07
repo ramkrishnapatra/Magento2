@@ -1,0 +1,14 @@
+{
+    "booking_enquiry": {
+        "column": {
+            "entity_id": true,
+            "phone_number": true,
+            "preferred_slot": true,
+            "status": true,
+            "created_at": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
+    }
+}

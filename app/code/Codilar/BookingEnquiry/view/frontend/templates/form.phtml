@@ -1,0 +1,33 @@
+<?php
+/** @var Template $block */
+
+use Magento\Framework\View\Element\Template;
+
+?>
+<div style="max-width: 450px; margin: 30px auto; padding: 25px; border: 1px solid #e1e1e1; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+    <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 20px;"><?= __('Schedule a Callback') ?></h2>
+
+    <form action="<?= $block->getUrl('booking/index/save') ?>" method="post">
+        <?= $block->getBlockHtml('formkey') ?>
+
+        <div style="margin-bottom: 16px;">
+            <label style="display:block; margin-bottom: 6px; font-weight: 600;">Phone Number</label>
+            <label>
+                <input type="tel" name="phone_number" placeholder="Enter your phone number" required
+                       style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+            </label>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label style="display:block; margin-bottom: 6px; font-weight: 600;">Preferred Time Slot</label>
+            <label>
+                <input type="text" name="preferred_slot" placeholder="e.g. Tomorrow between 2 PM - 4 PM" required
+                       style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+            </label>
+        </div>
+
+        <button type="submit" class="action primary" style="width: 100%; padding: 12px; font-size: 15px;">
+            <span>Submit Enquiry</span>
+        </button>
+    </form>
+</div>
