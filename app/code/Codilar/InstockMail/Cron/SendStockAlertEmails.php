@@ -1,81 +1,66 @@
 <?php
 declare(strict_types=1);
 
-namespace Codilar\InstockMail\Observer;
+namespace Codilar\InstockMail\Cron;
 
 use Codilar\InstockMail\Api\Data\StockAlertInterface;
+use Codilar\InstockMail\Model\ResourceModel\StockAlert\CollectionFactory as AlertCollectionFactory;
 use Codilar\InstockMail\Api\StockAlertRepositoryInterface;
-use Magento\Catalog\Model\Product;
+use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Customer\Api\CustomerRepositoryInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\Event\Observer;
-use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Mail\Template\TransportBuilder;
 use Magento\Framework\Stdlib\DateTime\DateTime;
 use Magento\Store\Model\App\Emulation;
+use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Psr\Log\LoggerInterface;
 
-class ProductSaveAfter implements ObserverInterface
+class SendStockAlertEmails
 {
+    protected AlertCollectionFactory $alertCollectionFactory;
+    protected StockAlertRepositoryInterface $stockAlertRepository;
+    protected ProductRepositoryInterface $productRepository;
+    protected CustomerRepositoryInterface $customerRepository;
     protected TransportBuilder $transportBuilder;
     protected ScopeConfigInterface $scopeConfig;
     protected StoreManagerInterface $storeManager;
     protected Emulation $emulation;
-    protected StockAlertRepositoryInterface $stockAlertRepository;
-    protected CustomerRepositoryInterface $customerRepository;
     protected DateTime $dateTime;
     protected LoggerInterface $logger;
 
     public function __construct(
+        AlertCollectionFactory $alertCollectionFactory,
+        StockAlertRepositoryInterface $stockAlertRepository,
+        ProductRepositoryInterface $productRepository,
+        CustomerRepositoryInterface $customerRepository,
         TransportBuilder $transportBuilder,
         ScopeConfigInterface $scopeConfig,
         StoreManagerInterface $storeManager,
         Emulation $emulation,
-        StockAlertRepositoryInterface $stockAlertRepository,
-        CustomerRepositoryInterface $customerRepository,
         DateTime $dateTime,
         LoggerInterface $logger
     ) {
+        $this->alertCollectionFactory = $alertCollectionFactory;
+        $this->stockAlertRepository = $stockAlertRepository;
+        $this->productRepository = $productRepository;
+        $this->customerRepository = $customerRepository;
         $this->transportBuilder = $transportBuilder;
         $this->scopeConfig = $scopeConfig;
         $this->storeManager = $storeManager;
         $this->emulation = $emulation;
-        $this->stockAlertRepository = $stockAlertRepository;
-        $this->customerRepository = $customerRepository;
         $this->dateTime = $dateTime;
         $this->logger = $logger;
     }
 
-    public function execute(Observer $observer): void
+    public function execute(): void
     {
         try {
-            /** @var Product $product */
-            $product = $observer->getEvent()->getProduct();
-            if (!$product || !$product->getId()) {
-                return;
-            }
+            // Alert collection se status pending filter
+            $alertCollection = $this->alertCollectionFactory->create();
+            $alertCollection->addFieldToFilter('status', StockAlertInterface::STATUS_PENDING);
 
-            $productId = (int)$product->getId();
-
-            $stockData = $product->getQuantityAndStockStatus();
-            $isInStock = false;
-
-            if (is_array($stockData) && isset($stockData['is_in_stock'])) {
-                $isInStock = (bool)$stockData['is_in_stock'];
-            } elseif ($product->getStockData() && isset($product->getStockData()['is_in_stock'])) {
-                $isInStock = (bool)$product->getStockData()['is_in_stock'];
-            }
-
-            // Only run if product is In Stock and Status is Enabled
-            if (!$isInStock || (int)$product->getStatus() !== 1) {
-                return;
-            }
-
-            // Fetch pending subscribers
-            $pendingAlerts = $this->stockAlertRepository->getPendingAlertsByProduct($productId);
-
-            if (empty($pendingAlerts)) {
+            if ($alertCollection->getSize() === 0) {
                 return;
             }
 
@@ -84,22 +69,37 @@ class ProductSaveAfter implements ObserverInterface
 
             $senderEmail = $this->scopeConfig->getValue(
                 'trans_email/ident_general/email',
-                \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                ScopeInterface::SCOPE_STORE,
                 $storeId
             ) ?: 'patraramakrishna90@gmail.com';
 
             $senderName = $this->scopeConfig->getValue(
                 'trans_email/ident_general/name',
-                \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                ScopeInterface::SCOPE_STORE,
                 $storeId
             ) ?: 'Store Alert';
 
             $this->emulation->startEnvironmentEmulation($storeId, \Magento\Framework\App\Area::AREA_FRONTEND, true);
 
             try {
-                foreach ($pendingAlerts as $alert) {
+                foreach ($alertCollection as $alert) {
                     try {
-                        $customer = $this->customerRepository->getById($alert->getCustomerId());
+                        $product = $this->productRepository->getById((int)$alert->getProductId());
+
+                        $stockData = $product->getQuantityAndStockStatus();
+                        $isInStock = false;
+                        if (is_array($stockData) && isset($stockData['is_in_stock'])) {
+                            $isInStock = (bool)$stockData['is_in_stock'];
+                        } elseif ($product->getStockData() && isset($product->getStockData()['is_in_stock'])) {
+                            $isInStock = (bool)$product->getStockData()['is_in_stock'];
+                        }
+
+                        // Skip agar product out of stock ya disabled hai
+                        if (!$isInStock || (int)$product->getStatus() !== 1) {
+                            continue;
+                        }
+
+                        $customer = $this->customerRepository->getById((int)$alert->getCustomerId());
                         $customerEmail = $alert->getCustomerEmail();
                         $customerName = trim($customer->getFirstname() . ' ' . $customer->getLastname()) ?: 'Customer';
 
@@ -122,17 +122,16 @@ class ProductSaveAfter implements ObserverInterface
                         $alert->setNotifiedAt($this->dateTime->gmtDate());
                         $this->stockAlertRepository->save($alert);
 
-                        $this->logger->info("InstockMail: Dispatched custom template to {$customerEmail} for product #{$productId}");
+                        $this->logger->info("Cron [codilar_cron_group]: Mail dispatched to {$customerEmail} for product #{$product->getId()}");
                     } catch (\Throwable $subEx) {
-                        $this->logger->error('InstockMail Dispatch Exception: ' . $subEx->getMessage());
+                        $this->logger->error('Cron Item Dispatch Error: ' . $subEx->getMessage());
                     }
                 }
             } finally {
                 $this->emulation->stopEnvironmentEmulation();
             }
-
         } catch (\Throwable $e) {
-            $this->logger->critical('InstockMail Root Observer Failure: ' . $e->getMessage());
+            $this->logger->critical('Custom Cron Group Failure: ' . $e->getMessage());
         }
     }
 }
