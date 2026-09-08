@@ -1,35 +1,42 @@
 <?php
+declare(strict_types=1);
+
 namespace Codilar\BookingEnquiry\Block;
 
+use Codilar\BookingEnquiry\Model\ResourceModel\BookingEnquiry\Collection;
+use Codilar\BookingEnquiry\Model\ResourceModel\BookingEnquiry\CollectionFactory;
 use Magento\Framework\View\Element\Template;
-use Magento\Framework\App\ResourceConnection;
 
 class Listing extends Template
 {
-    protected ResourceConnection $resource;
+    /**
+     * @var CollectionFactory
+     */
+    private CollectionFactory $collectionFactory;
 
-    public function __construct(Template\Context $context, ResourceConnection $resource, array $data = [])
-    {
+    /**
+     * @param Template\Context $context
+     * @param CollectionFactory $collectionFactory
+     * @param array $data
+     */
+    public function __construct(
+        Template\Context $context,
+        CollectionFactory $collectionFactory,
+        array $data = []
+    ) {
         parent::__construct($context, $data);
-        $this->resource = $resource;
+        $this->collectionFactory = $collectionFactory;
     }
 
     /**
-     * Fetch bookings ordered by created_at ASC (FIFO)
+     * Fetch bookings collection ordered by created_at ASC (FIFO)
+     *
+     * @return Collection
      */
-    public function getEnquiries(): array
+    public function getEnquiries(): Collection
     {
-        try {
-            $connection = $this->resource->getConnection();
-            $tableName = $this->resource->getTableName('booking_enquiry');
-
-            $select = $connection->select()
-                ->from($tableName)
-                ->order('created_at ASC');
-
-            return $connection->fetchAll($select);
-        } catch (\Exception $e) {
-            return [];
-        }
+        $collection = $this->collectionFactory->create();
+        $collection->setOrder('created_at', Collection::SORT_ORDER_ASC);
+        return $collection;
     }
 }

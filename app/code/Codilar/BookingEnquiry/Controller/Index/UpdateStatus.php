@@ -3,11 +3,12 @@ declare(strict_types=1);
 
 namespace Codilar\BookingEnquiry\Controller\Index;
 
+use Codilar\BookingEnquiry\Api\BookingEnquiryRepositoryInterface;
+use Codilar\BookingEnquiry\Api\Data\BookingEnquiryInterface;
 use Exception;
 use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\App\RequestInterface;
-use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Controller\Result\Redirect;
 use Magento\Framework\Controller\Result\RedirectFactory;
 use Magento\Framework\Message\ManagerInterface as MessageManagerInterface;
@@ -25,9 +26,9 @@ class UpdateStatus implements HttpGetActionInterface, HttpPostActionInterface
     private RedirectFactory $redirectFactory;
 
     /**
-     * @var ResourceConnection
+     * @var BookingEnquiryRepositoryInterface
      */
-    private ResourceConnection $resource;
+    private BookingEnquiryRepositoryInterface $enquiryRepository;
 
     /**
      * @var MessageManagerInterface
@@ -37,24 +38,22 @@ class UpdateStatus implements HttpGetActionInterface, HttpPostActionInterface
     /**
      * @param RequestInterface $request
      * @param RedirectFactory $redirectFactory
-     * @param ResourceConnection $resource
+     * @param BookingEnquiryRepositoryInterface $enquiryRepository
      * @param MessageManagerInterface $messageManager
      */
     public function __construct(
         RequestInterface $request,
         RedirectFactory $redirectFactory,
-        ResourceConnection $resource,
+        BookingEnquiryRepositoryInterface $enquiryRepository,
         MessageManagerInterface $messageManager
     ) {
         $this->request = $request;
         $this->redirectFactory = $redirectFactory;
-        $this->resource = $resource;
+        $this->enquiryRepository = $enquiryRepository;
         $this->messageManager = $messageManager;
     }
 
     /**
-     * Update enquiry status to handled
-     *
      * @return Redirect
      */
     public function execute(): Redirect
@@ -64,14 +63,9 @@ class UpdateStatus implements HttpGetActionInterface, HttpPostActionInterface
 
         if ($id) {
             try {
-                $connection = $this->resource->getConnection();
-                $tableName = $this->resource->getTableName('booking_enquiry');
-
-                $connection->update(
-                    $tableName,
-                    ['status' => 'handled'],
-                    ['entity_id = ?' => $id]
-                );
+                $enquiry = $this->enquiryRepository->getById($id);
+                $enquiry->setStatus(BookingEnquiryInterface::STATUS_HANDLED);
+                $this->enquiryRepository->save($enquiry);
 
                 $this->messageManager->addSuccessMessage(__('Enquiry #%1 marked as Handled.', $id));
             } catch (Exception $e) {

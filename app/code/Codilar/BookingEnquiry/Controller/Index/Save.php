@@ -3,10 +3,12 @@ declare(strict_types=1);
 
 namespace Codilar\BookingEnquiry\Controller\Index;
 
+use Codilar\BookingEnquiry\Api\BookingEnquiryRepositoryInterface;
+use Codilar\BookingEnquiry\Api\Data\BookingEnquiryInterface;
+use Codilar\BookingEnquiry\Model\BookingEnquiryFactory;
 use Exception;
 use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\App\RequestInterface;
-use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Controller\Result\Redirect;
 use Magento\Framework\Controller\Result\RedirectFactory;
 use Magento\Framework\Message\ManagerInterface as MessageManagerInterface;
@@ -24,9 +26,14 @@ class Save implements HttpPostActionInterface
     private RedirectFactory $redirectFactory;
 
     /**
-     * @var ResourceConnection
+     * @var BookingEnquiryFactory
      */
-    private ResourceConnection $resource;
+    private BookingEnquiryFactory $bookingEnquiryFactory;
+
+    /**
+     * @var BookingEnquiryRepositoryInterface
+     */
+    private BookingEnquiryRepositoryInterface $enquiryRepository;
 
     /**
      * @var MessageManagerInterface
@@ -36,24 +43,25 @@ class Save implements HttpPostActionInterface
     /**
      * @param RequestInterface $request
      * @param RedirectFactory $redirectFactory
-     * @param ResourceConnection $resource
+     * @param BookingEnquiryFactory $bookingEnquiryFactory
+     * @param BookingEnquiryRepositoryInterface $enquiryRepository
      * @param MessageManagerInterface $messageManager
      */
     public function __construct(
         RequestInterface $request,
         RedirectFactory $redirectFactory,
-        ResourceConnection $resource,
+        BookingEnquiryFactory $bookingEnquiryFactory,
+        BookingEnquiryRepositoryInterface $enquiryRepository,
         MessageManagerInterface $messageManager
     ) {
         $this->request = $request;
         $this->redirectFactory = $redirectFactory;
-        $this->resource = $resource;
+        $this->bookingEnquiryFactory = $bookingEnquiryFactory;
+        $this->enquiryRepository = $enquiryRepository;
         $this->messageManager = $messageManager;
     }
 
     /**
-     * Execute save booking enquiry
-     *
      * @return Redirect
      */
     public function execute(): Redirect
@@ -63,14 +71,12 @@ class Save implements HttpPostActionInterface
 
         if (!empty($data['phone_number']) && !empty($data['preferred_slot'])) {
             try {
-                $connection = $this->resource->getConnection();
-                $tableName = $this->resource->getTableName('booking_enquiry');
+                $enquiry = $this->bookingEnquiryFactory->create();
+                $enquiry->setPhoneNumber(strip_tags((string)$data['phone_number']));
+                $enquiry->setPreferredSlot(strip_tags((string)$data['preferred_slot']));
+                $enquiry->setStatus(BookingEnquiryInterface::STATUS_PENDING);
 
-                $connection->insert($tableName, [
-                    'phone_number'   => strip_tags((string)$data['phone_number']),
-                    'preferred_slot' => strip_tags((string)$data['preferred_slot']),
-                    'status'         => 'pending'
-                ]);
+                $this->enquiryRepository->save($enquiry);
 
                 $this->messageManager->addSuccessMessage(__('Your request has been placed! Our team will contact you.'));
             } catch (Exception $e) {

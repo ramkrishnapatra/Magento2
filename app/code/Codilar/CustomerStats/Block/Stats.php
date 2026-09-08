@@ -3,12 +3,12 @@ declare(strict_types=1);
 
 namespace Codilar\CustomerStats\Block;
 
+use Magento\Customer\Model\SessionFactory as CustomerSessionFactory;
+use Magento\Framework\Pricing\PriceCurrencyInterface;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
-use Magento\Customer\Model\SessionFactory as CustomerSessionFactory;
-use Magento\Sales\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
 use Magento\Sales\Model\Order;
-use Magento\Framework\Pricing\PriceCurrencyInterface;
+use Magento\Sales\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
 
 class Stats extends Template
 {

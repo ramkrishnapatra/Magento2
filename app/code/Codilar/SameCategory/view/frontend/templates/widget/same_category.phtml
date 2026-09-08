@@ -1,5 +1,8 @@
 <?php
-/** @var \Codilar\SameCategory\Block\Widget\SameCategory $block */
+/** @var SameCategory $block */
+
+use Codilar\SameCategory\Block\Widget\SameCategory;
+
 $products = $block->getCategoryProducts();
 $title = $block->getData('title') ?: __('More from this category');
 $sliderId = 'luma-cat-slider-' . uniqid();
