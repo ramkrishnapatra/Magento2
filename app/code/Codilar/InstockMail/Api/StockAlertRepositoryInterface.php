@@ -2,12 +2,23 @@
 namespace Codilar\InstockMail\Api;
 
 use Codilar\InstockMail\Api\Data\StockAlertInterface;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\CouldNotDeleteException;
 
 interface StockAlertRepositoryInterface
 {
+    /**
+     * Subscribe customer/guest for out-of-stock notification
+     *
+     * @param int $productId
+     * @param string $email
+     * @param int|null $customerId
+     * @return string
+     * @throws LocalizedException
+     */
+    public function subscribe(int $productId, string $email, ?int $customerId = 0): string;
     /**
      * @param StockAlertInterface $alert
      * @return StockAlertInterface

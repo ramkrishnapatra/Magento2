@@ -1,36 +1,89 @@
 <?php
+declare(strict_types=1);
+
 namespace Codilar\InstockMail\Model;
 
 use Codilar\InstockMail\Api\Data\StockAlertInterface;
 use Codilar\InstockMail\Api\StockAlertRepositoryInterface;
 use Codilar\InstockMail\Model\ResourceModel\StockAlert as ResourceModel;
+use Codilar\InstockMail\Model\ResourceModel\StockAlert\CollectionFactory;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Stdlib\DateTime\DateTime;
+use Magento\Store\Model\StoreManagerInterface;
+use Psr\Log\LoggerInterface;
 
 class StockAlertRepository implements StockAlertRepositoryInterface
 {
-    /**
-     * @var ResourceModel
-     */
     protected ResourceModel $resource;
+    protected StockAlertFactory $stockAlertFactory;
+    protected CollectionFactory $collectionFactory;
+    protected StoreManagerInterface $storeManager;
+    protected DateTime $dateTime;
+    protected LoggerInterface $logger;
 
-    /**
-     * @var StockAlertFactory
-     */
-    protected \Codilar\InstockMail\Model\StockAlertFactory $alertFactory;
-
-    /**
-     * @param ResourceModel $resource
-     * @param StockAlertFactory $alertFactory
-     */
     public function __construct(
         ResourceModel $resource,
-        StockAlertFactory $alertFactory
+        StockAlertFactory $stockAlertFactory,
+        CollectionFactory $collectionFactory,
+        StoreManagerInterface $storeManager,
+        DateTime $dateTime,
+        LoggerInterface $logger
     ) {
         $this->resource = $resource;
-        $this->alertFactory = $alertFactory;
+        $this->stockAlertFactory = $stockAlertFactory;
+        $this->collectionFactory = $collectionFactory;
+        $this->storeManager = $storeManager;
+        $this->dateTime = $dateTime;
+        $this->logger = $logger;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function subscribe(int $productId, string $email, ?int $customerId = 0): string
+    {
+        $email = trim($email);
+
+        if (!$productId || empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new LocalizedException(
+                __('Please provide a valid product and email address.')
+            );
+        }
+
+        // Duplicate Check
+        $existing = $this->collectionFactory->create()
+            ->addFieldToFilter('product_id', $productId)
+            ->addFieldToFilter('customer_email', $email)
+            ->addFieldToFilter('status', StockAlertInterface::STATUS_PENDING)
+            ->getFirstItem();
+
+        if ($existing && $existing->getId()) {
+            return __('You are already subscribed for this stock alert.')->render();
+        }
+
+        try {
+            $storeId = (int)$this->storeManager->getStore()->getId();
+
+            $alert = $this->stockAlertFactory->create();
+            $alert->setCustomerId((int)$customerId);
+            $alert->setCustomerEmail($email);
+            $alert->setProductId($productId);
+            $alert->setStoreId($storeId);
+            $alert->setStatus(StockAlertInterface::STATUS_PENDING);
+            $alert->setCreatedAt($this->dateTime->gmtDate());
+
+            $this->save($alert);
+
+            return __('Subscription successful! We will notify you when this item is back in stock.')->render();
+        } catch (\Throwable $e) {
+            $this->logger->critical('Stock Alert API Error: ' . $e->getMessage());
+            throw new LocalizedException(
+                __('Unable to process subscription: %1', $e->getMessage())
+            );
+        }
     }
 
     /**
@@ -55,7 +108,7 @@ class StockAlertRepository implements StockAlertRepositoryInterface
      */
     public function getById(int $alertId): StockAlertInterface
     {
-        $alert = $this->alertFactory->create();
+        $alert = $this->stockAlertFactory->create();
         $this->resource->load($alert, $alertId);
         if (!$alert->getId()) {
             throw new NoSuchEntityException(__('Stock alert with ID "%1" does not exist.', $alertId));

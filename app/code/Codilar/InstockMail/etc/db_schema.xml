@@ -3,7 +3,7 @@
         xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
     <table name="codilar_custom_stock_alert" resource="default" engine="innodb" comment="Custom Stock Alert Subscriptions">
         <column xsi:type="int" name="alert_id" padding="10" unsigned="true" nullable="false" identity="true" comment="Alert ID"/>
-        <column xsi:type="int" name="customer_id" padding="10" unsigned="true" nullable="false" comment="Customer ID"/>
+        <column xsi:type="int" name="customer_id" padding="10" unsigned="true" nullable="true" default="0" comment="Customer ID"/>
         <column xsi:type="int" name="product_id" padding="10" unsigned="true" nullable="false" comment="Product ID"/>
         <column xsi:type="varchar" name="customer_email" length="255" nullable="false" comment="Customer Email"/>
         <column xsi:type="varchar" name="status" length="32" nullable="false" default="pending" comment="Alert Status (pending, handled)"/>

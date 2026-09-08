@@ -99,9 +99,22 @@ class SendStockAlertEmails
                             continue;
                         }
 
-                        $customer = $this->customerRepository->getById((int)$alert->getCustomerId());
                         $customerEmail = $alert->getCustomerEmail();
-                        $customerName = trim($customer->getFirstname() . ' ' . $customer->getLastname()) ?: 'Customer';
+                        $customerName = 'Customer';
+                        $customerId = (int)$alert->getCustomerId();
+
+                        // FIX: Sirf tab customerRepository se load kare jab customer_id valid ho (> 0)
+                        if ($customerId > 0) {
+                            try {
+                                $customer = $this->customerRepository->getById($customerId);
+                                $fullName = trim($customer->getFirstname() . ' ' . $customer->getLastname());
+                                if (!empty($fullName)) {
+                                    $customerName = $fullName;
+                                }
+                            } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
+                                // Customer delete ho chuka ho toh default 'Customer' hi rahega
+                            }
+                        }
 
                         $transport = $this->transportBuilder
                             ->setTemplateIdentifier('codilar_instockmail_custom_template')

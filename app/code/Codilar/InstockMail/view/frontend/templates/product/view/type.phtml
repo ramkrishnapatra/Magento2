@@ -1,5 +1,9 @@
 <?php
-/** @var $block \Magento\ProductAlert\Block\Product\View */
+/** @var View $block */
+/** @var Escaper $escaper */
+
+use Magento\Framework\Escaper;
+use Magento\ProductAlert\Block\Product\View;
 
 $product = $block->getProduct();
 $productId = ($product && $product->getId()) ? (int)$product->getId() : 0;
@@ -8,45 +12,128 @@ $productId = ($product && $product->getId()) ? (int)$product->getId() : 0;
     <a href="javascript:void(0);"
        id="custom-stock-alert-btn"
        data-product-id="<?= (int)$productId ?>"
-       title="<?= $block->escapeHtmlAttr(__('Notify me when this product is in stock')) ?>"
+       title="<?= $escaper->escapeHtmlAttr(__('Notify me when this product is in stock')) ?>"
        class="action alert">
-        <?= $block->escapeHtml(__('Notify me when this product is in stock')) ?>
+        <?= $escaper->escapeHtml(__('Notify me when this product is in stock')) ?>
     </a>
 </div>
 
-<script>
-    require(['jquery', 'mage/url'], function ($, urlBuilder) {
-        'use strict';
-
-        function renderLumaMessage(type, messageText) {
-            let msgClass = (type === 'error') ? 'message-error error message' :
-                ((type === 'notice') ? 'message-notice notice message' : 'message-success success message');
-
-            const messageHtml = `
-            <div class="messages">
-                <div class="${msgClass}" data-ui-id="message-${type}">
-                    <div>${messageText}</div>
+<!-- Stock Alert Email Modal Popup -->
+<div id="stock-alert-modal" style="display:none;">
+    <form id="stock-alert-form" data-mage-init='{"validation": {}}'>
+        <input type="hidden" name="product_id" id="alert-product-id" value="<?= (int)$productId ?>" />
+        <div class="fieldset">
+            <div class="field email required">
+                <label class="label" for="alert_customer_email">
+                    <span><?= $escaper->escapeHtml(__('Enter your email to get notified:')) ?></span>
+                </label>
+                <div class="control" style="margin-top: 10px;">
+                    <input name="email"
+                           id="alert_customer_email"
+                           type="email"
+                           class="input-text"
+                           data-validate="{required:true, 'validate-email':true}"
+                           placeholder="<?= $escaper->escapeHtmlAttr(__('example@domain.com')) ?>"
+                           style="width: 100%;" />
                 </div>
             </div>
-            `;
+        </div>
+    </form>
+</div>
 
-            let $messagesContainer = $('.page.messages');
-            if (!$messagesContainer.length) {
-                $messagesContainer = $('<div class="page messages"></div>');
-                if ($('#maincontent').length) {
-                    $('#maincontent').prepend($messagesContainer);
-                } else {
-                    $('.columns').prepend($messagesContainer);
-                }
-            }
+<script>
+    require([
+        'jquery',
+        'mage/url',
+        'Magento_Ui/js/modal/modal',
+        'Magento_Customer/js/customer-data',
+        'mage/validation'
+    ], function ($, urlBuilder, modal, customerData) {
+        'use strict';
 
-            $messagesContainer.empty().append(messageHtml).show();
+        /**
+         * Magento Native Message Handler
+         * Eliminates manual jQuery DOM insertion and prevents duplicate message containers
+         */
+        function showMagentoMessage(type, messageText) {
+            customerData.set('messages', {
+                messages: [{
+                    type: type, // 'success', 'notice', ya 'error'
+                    text: messageText
+                }]
+            });
+
             $('html, body').animate({ scrollTop: 0 }, 300);
-
-            setTimeout(function () {
-                $messagesContainer.find('.message').fadeOut(500, function () { $(this).remove(); });
-            }, 7000);
         }
+
+        const popupModal = $('#stock-alert-modal').modal({
+            type: 'popup',
+            responsive: true,
+            innerScroll: true,
+            title: $.mage.__('Notify Me In Stock'),
+            buttons: [{
+                text: $.mage.__('Subscribe'),
+                class: 'action primary action-save',
+                click: function () {
+                    const form = $('#stock-alert-form');
+                    if (!form.valid()) {
+                        return;
+                    }
+
+                    let productId = $('#alert-product-id').val();
+                    if (!productId || productId === '0') {
+                        productId = $('input[name="product"]').val();
+                    }
+
+                    const customerEmail = $('#alert_customer_email').val();
+
+                    // Logged in customer verification via customer-data section
+                    const customer = customerData.get('customer')();
+                    const customerId = (customer && customer.id) ? parseInt(customer.id) : 0;
+
+                    const payload = {
+                        productId: parseInt(productId),
+                        email: customerEmail,
+                        customerId: customerId
+                    };
+
+                    $('body').trigger('processStart');
+
+                    $.ajax({
+                        url: urlBuilder.build('rest/V1/stock-alert/subscribe'),
+                        type: 'POST',
+                        contentType: 'application/json',
+                        dataType: 'json',
+                        data: JSON.stringify(payload),
+                        complete: function () {
+                            $('body').trigger('processStop');
+                        },
+                        success: function (response) {
+                            popupModal.modal('closeModal');
+                            $('#stock-alert-form')[0].reset();
+
+                            let responseText = (typeof response === 'string') ? response : JSON.stringify(response);
+
+                            if (responseText.toLowerCase().indexOf('already') !== -1) {
+                                showMagentoMessage('notice', responseText);
+                            } else {
+                                showMagentoMessage('success', responseText);
+                            }
+                        },
+                        error: function (xhr) {
+                            popupModal.modal('closeModal');
+
+                            let errText = $.mage.__('Failed to subscribe.');
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errText = xhr.responseJSON.message;
+                            }
+
+                            showMagentoMessage('error', errText);
+                        }
+                    });
+                }
+            }]
+        });
 
         $(document).on('click', '#custom-stock-alert-btn', function (e) {
             e.preventDefault();
@@ -56,35 +143,8 @@ $productId = ($product && $product->getId()) ? (int)$product->getId() : 0;
                 productId = $('input[name="product"]').val();
             }
 
-            if (!productId) {
-                renderLumaMessage('error', 'Unable to find Product ID.');
-                return;
-            }
-
-            $('body').trigger('processStart');
-
-            $.ajax({
-                url: urlBuilder.build('customalert/stock/add'),
-                type: 'POST',
-                dataType: 'json',
-                data: {
-                    product_id: productId,
-                    form_key: $('input[name="form_key"]').val()
-                },
-                complete: function () {
-                    $('body').trigger('processStop');
-                },
-                success: function (response) {
-                    if (response.success) {
-                        renderLumaMessage(response.is_notice ? 'notice' : 'success', response.message);
-                    } else {
-                        renderLumaMessage('error', response.message);
-                    }
-                },
-                error: function () {
-                    renderLumaMessage('error', 'Failed to subscribe.');
-                }
-            });
+            $('#alert-product-id').val(productId);
+            popupModal.modal('openModal');
         });
     });
 </script>
