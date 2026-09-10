@@ -1,84 +1,86 @@
 <?php
+declare(strict_types=1);
+
 namespace Codilar\ProductEnquiry\Api\Data;
 
 interface EnquiryInterface
 {
-    const ENTITY_ID  = 'entity_id';
-    const SKU        = 'sku';
-    const NAME       = 'name';
-    const EMAIL      = 'email';
-    const ADDRESS    = 'address';
-    const QTY        = 'qty';
-    const CREATED_AT = 'created_at';
+    public const ENTITY_ID  = 'entity_id';
+    public const SKU        = 'sku';
+    public const NAME       = 'name';
+    public const EMAIL      = 'email';
+    public const ADDRESS    = 'address';
+    public const QTY        = 'qty';
+    public const CREATED_AT = 'created_at';
 
     /**
      * @return int|null
      */
-    public function getId();
+    public function getId(): ?int;
 
     /**
      * @return string|null
      */
-    public function getSku();
+    public function getSku(): ?string;
 
     /**
      * @param string $sku
-     * @return $this
+     * @return EnquiryInterface
      */
-    public function setSku($sku);
+    public function setSku(string $sku): EnquiryInterface;
 
     /**
      * @return string|null
      */
-    public function getName();
+    public function getName(): ?string;
 
     /**
      * @param string $name
-     * @return $this
+     * @return EnquiryInterface
      */
-    public function setName($name);
+    public function setName(string $name): EnquiryInterface;
 
     /**
      * @return string|null
      */
-    public function getEmail();
+    public function getEmail(): ?string;
 
     /**
      * @param string $email
-     * @return $this
+     * @return EnquiryInterface
      */
-    public function setEmail($email);
+    public function setEmail(string $email): EnquiryInterface;
 
     /**
      * @return string|null
      */
-    public function getAddress();
+    public function getAddress(): ?string;
 
     /**
      * @param string $address
-     * @return $this
+     * @return EnquiryInterface
      */
-    public function setAddress($address);
+    public function setAddress(string $address): EnquiryInterface;
 
     /**
      * @return int|null
      */
-    public function getQty();
+    public function getQty(): ?int;
 
     /**
      * @param int $qty
-     * @return $this
+     * @return EnquiryInterface
      */
-    public function setQty($qty);
+    public function setQty(int $qty): EnquiryInterface;
 
     /**
      * @return string|null
      */
-    public function getCreatedAt();
+    public function getCreatedAt(): ?string;
 
     /**
      * @param string $createdAt
-     * @return $this
+     * @return EnquiryInterface
      */
-    public function setCreatedAt($createdAt);
+    public function setCreatedAt(string $createdAt): EnquiryInterface;
 }

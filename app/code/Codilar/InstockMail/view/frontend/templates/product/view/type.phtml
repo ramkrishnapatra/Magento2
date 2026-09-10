@@ -52,18 +52,54 @@ $productId = ($product && $product->getId()) ? (int)$product->getId() : 0;
         'use strict';
 
         /**
-         * Magento Native Message Handler
-         * Eliminates manual jQuery DOM insertion and prevents duplicate message containers
+         * Reliable Luma UI Message Renderer
          */
         function showMagentoMessage(type, messageText) {
+            if (typeof messageText === 'string') {
+                messageText = messageText.replace(/^"|"$/g, '');
+            }
+
+            // 1. Native customerData storage update
             customerData.set('messages', {
                 messages: [{
-                    type: type, // 'success', 'notice', ya 'error'
+                    type: type,
                     text: messageText
                 }]
             });
 
+            // 2. Direct DOM fallback
+            const msgClass = (type === 'error') ? 'message-error error message' :
+                ((type === 'notice') ? 'message-notice notice message' : 'message-success success message');
+
+            const messageHtml = `
+                <div class="messages">
+                    <div class="${msgClass}" data-ui-id="message-${type}">
+                        <div>${messageText}</div>
+                    </div>
+                </div>
+            `;
+
+            let $messagesContainer = $('.page.messages').first();
+            if (!$messagesContainer.length) {
+                $messagesContainer = $('<div class="page messages"></div>');
+                const $mainContent = $('.page-main').first();
+                if ($mainContent.length) {
+                    $mainContent.prepend($messagesContainer);
+                } else {
+                    $('.columns').first().prepend($messagesContainer);
+                }
+            }
+
+            $messagesContainer.find('.messages').remove();
+            $messagesContainer.append(messageHtml).show();
+
             $('html, body').animate({ scrollTop: 0 }, 300);
+
+            setTimeout(function () {
+                $messagesContainer.find('.messages').fadeOut(500, function () {
+                    $(this).remove();
+                });
+            }, 7000);
         }
 
         const popupModal = $('#stock-alert-modal').modal({
@@ -87,7 +123,6 @@ $productId = ($product && $product->getId()) ? (int)$product->getId() : 0;
 
                     const customerEmail = $('#alert_customer_email').val();
 
-                    // Logged in customer verification via customer-data section
                     const customer = customerData.get('customer')();
                     const customerId = (customer && customer.id) ? parseInt(customer.id) : 0;
 
@@ -126,13 +161,20 @@ $productId = ($product && $product->getId()) ? (int)$product->getId() : 0;
                             let errText = $.mage.__('Failed to subscribe.');
                             if (xhr.responseJSON && xhr.responseJSON.message) {
                                 errText = xhr.responseJSON.message;
+                            } else if (xhr.responseText) {
+                                errText = xhr.responseText;
                             }
 
                             showMagentoMessage('error', errText);
                         }
                     });
                 }
-            }]
+            }],
+            closed: function () {
+                const form = $('#stock-alert-form');
+                form.validate().resetForm();
+                form.find('.mage-error').removeClass('mage-error');
+            }
         });
 
         $(document).on('click', '#custom-stock-alert-btn', function (e) {
@@ -144,6 +186,12 @@ $productId = ($product && $product->getId()) ? (int)$product->getId() : 0;
             }
 
             $('#alert-product-id').val(productId);
+
+            const customer = customerData.get('customer')();
+            if (customer && customer.email) {
+                $('#alert_customer_email').val(customer.email);
+            }
+
             popupModal.modal('openModal');
         });
     });

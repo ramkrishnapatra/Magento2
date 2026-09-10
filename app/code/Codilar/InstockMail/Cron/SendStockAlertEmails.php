@@ -4,11 +4,14 @@ declare(strict_types=1);
 namespace Codilar\InstockMail\Cron;
 
 use Codilar\InstockMail\Api\Data\StockAlertInterface;
-use Codilar\InstockMail\Model\ResourceModel\StockAlert\CollectionFactory as AlertCollectionFactory;
 use Codilar\InstockMail\Api\StockAlertRepositoryInterface;
+use Codilar\InstockMail\Model\ResourceModel\StockAlert\CollectionFactory as AlertCollectionFactory;
 use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Catalog\Model\Product\Attribute\Source\Status as ProductStatus;
 use Magento\Customer\Api\CustomerRepositoryInterface;
+use Magento\Framework\App\Area;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Mail\Template\TransportBuilder;
 use Magento\Framework\Stdlib\DateTime\DateTime;
 use Magento\Store\Model\App\Emulation;
@@ -53,10 +56,12 @@ class SendStockAlertEmails
         $this->logger = $logger;
     }
 
+    /**
+     * Execute stock alert cron job
+     */
     public function execute(): void
     {
         try {
-            // Alert collection se status pending filter
             $alertCollection = $this->alertCollectionFactory->create();
             $alertCollection->addFieldToFilter('status', StockAlertInterface::STATUS_PENDING);
 
@@ -71,7 +76,7 @@ class SendStockAlertEmails
                 'trans_email/ident_general/email',
                 ScopeInterface::SCOPE_STORE,
                 $storeId
-            ) ?: 'patraramakrishna90@gmail.com';
+            ) ?: 'sales@example.com';
 
             $senderName = $this->scopeConfig->getValue(
                 'trans_email/ident_general/name',
@@ -79,23 +84,20 @@ class SendStockAlertEmails
                 $storeId
             ) ?: 'Store Alert';
 
-            $this->emulation->startEnvironmentEmulation($storeId, \Magento\Framework\App\Area::AREA_FRONTEND, true);
+            // Emulate store frontend environment to resolve scope-based URLs and stock
+            $this->emulation->startEnvironmentEmulation($storeId, Area::AREA_FRONTEND, true);
 
             try {
                 foreach ($alertCollection as $alert) {
                     try {
-                        $product = $this->productRepository->getById((int)$alert->getProductId());
+                        $productId = (int)$alert->getProductId();
+                        $product = $this->productRepository->getById($productId, false, $storeId, true);
 
-                        $stockData = $product->getQuantityAndStockStatus();
-                        $isInStock = false;
-                        if (is_array($stockData) && isset($stockData['is_in_stock'])) {
-                            $isInStock = (bool)$stockData['is_in_stock'];
-                        } elseif ($product->getStockData() && isset($product->getStockData()['is_in_stock'])) {
-                            $isInStock = (bool)$product->getStockData()['is_in_stock'];
-                        }
+                        // Non-deprecated stock & salability verification within active emulation
+                        $isSalable = (bool)$product->isSalable();
+                        $isEnabled = (int)$product->getStatus() === ProductStatus::STATUS_ENABLED;
 
-                        // Skip agar product out of stock ya disabled hai
-                        if (!$isInStock || (int)$product->getStatus() !== 1) {
+                        if (!$isSalable || !$isEnabled) {
                             continue;
                         }
 
@@ -103,7 +105,6 @@ class SendStockAlertEmails
                         $customerName = 'Customer';
                         $customerId = (int)$alert->getCustomerId();
 
-                        // FIX: Sirf tab customerRepository se load kare jab customer_id valid ho (> 0)
                         if ($customerId > 0) {
                             try {
                                 $customer = $this->customerRepository->getById($customerId);
@@ -111,31 +112,34 @@ class SendStockAlertEmails
                                 if (!empty($fullName)) {
                                     $customerName = $fullName;
                                 }
-                            } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
-                                // Customer delete ho chuka ho toh default 'Customer' hi rahega
+                            } catch (NoSuchEntityException $e) {
+                                // Fallback to 'Customer' if record is missing
                             }
                         }
 
                         $transport = $this->transportBuilder
                             ->setTemplateIdentifier('codilar_instockmail_custom_template')
-                            ->setTemplateOptions(['area' => 'frontend', 'store' => $storeId])
+                            ->setTemplateOptions(['area' => Area::AREA_FRONTEND, 'store' => $storeId])
                             ->setTemplateVars([
                                 'customer_name' => $customerName,
                                 'product_name'  => $product->getName(),
                                 'product_url'   => $product->getProductUrl()
                             ])
-                            ->setFrom(['name' => $senderName, 'email' => $senderEmail])
+                            ->setFromByScope([
+                                'name'  => $senderName,
+                                'email' => $senderEmail
+                            ], $storeId)
                             ->addTo($customerEmail)
                             ->getTransport();
 
                         $transport->sendMessage();
 
-                        // Mark as handled
+                        // Update alert status
                         $alert->setStatus(StockAlertInterface::STATUS_HANDLED);
                         $alert->setNotifiedAt($this->dateTime->gmtDate());
                         $this->stockAlertRepository->save($alert);
 
-                        $this->logger->info("Cron [codilar_cron_group]: Mail dispatched to {$customerEmail} for product #{$product->getId()}");
+                        $this->logger->info("Cron [codilar_cron_group]: Mail dispatched to {$customerEmail} for product #{$productId}");
                     } catch (\Throwable $subEx) {
                         $this->logger->error('Cron Item Dispatch Error: ' . $subEx->getMessage());
                     }

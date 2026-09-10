@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Webapi:etc/webapi.xsd">
+
+    <!-- POST: Create Enquiry -->
+    <route url="/V1/booking-enquiry" method="POST">
+        <service class="Codilar\BookingEnquiry\Api\BookingEnquiryRepositoryInterface" method="save"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+
+    <!-- GET: Get Queue List (FIFO) -->
+    <route url="/V1/booking-enquiry/queue" method="GET">
+        <service class="Codilar\BookingEnquiry\Api\BookingEnquiryRepositoryInterface" method="getQueueList"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+
+    <!-- GET: Get Enquiry By ID -->
+    <route url="/V1/booking-enquiry/:entityId" method="GET">
+        <service class="Codilar\BookingEnquiry\Api\BookingEnquiryRepositoryInterface" method="getById"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+
+    <!-- PUT: Update Status -->
+    <route url="/V1/booking-enquiry/:id/status" method="PUT">
+        <service class="Codilar\BookingEnquiry\Api\BookingEnquiryRepositoryInterface" method="updateStatus"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+
+    <!-- DELETE: Delete By ID -->
+    <route url="/V1/booking-enquiry/:entityId" method="DELETE">
+        <service class="Codilar\BookingEnquiry\Api\BookingEnquiryRepositoryInterface" method="deleteById"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+
+    <route url="/V1/booking-enquiry/admin/queue" method="GET">
+        <service class="Codilar\BookingEnquiry\Api\BookingEnquiryRepositoryInterface" method="getAdminQueueList"/>
+        <resources>
+            <resource ref="Codilar_BookingEnquiry::queue_view"/>
+        </resources>
+    </route>
+</routes>

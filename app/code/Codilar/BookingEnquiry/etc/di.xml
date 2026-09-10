@@ -1,7 +1,24 @@
 <?xml version="1.0"?>
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+
+    <!-- 1. Main Entity Interface Preference -->
     <preference for="Codilar\BookingEnquiry\Api\Data\BookingEnquiryInterface"
                 type="Codilar\BookingEnquiry\Model\BookingEnquiry"/>
+
+    <!-- 2. Repository Preference -->
     <preference for="Codilar\BookingEnquiry\Api\BookingEnquiryRepositoryInterface"
                 type="Codilar\BookingEnquiry\Model\BookingEnquiryRepository"/>
+
+    <!-- 3. Request DTO Preference -->
+    <preference for="Codilar\BookingEnquiry\Api\Data\RequestItemInterface"
+                type="Codilar\BookingEnquiry\Model\Api\RequestItem"/>
+
+    <!-- 4. Base Response DTO Preference (POST / PUT / DELETE) -->
+    <preference for="Codilar\BookingEnquiry\Api\Data\ResponseItemInterface"
+                type="Codilar\BookingEnquiry\Model\Api\ResponseItem"/>
+
+    <!-- 5. Extended Response DTO Preference (GET with Data Payload) -->
+    <preference for="Codilar\BookingEnquiry\Api\Data\ResponseGetDataItemInterface"
+                type="Codilar\BookingEnquiry\Model\Api\ResponseGetDataItem"/>
 </config>

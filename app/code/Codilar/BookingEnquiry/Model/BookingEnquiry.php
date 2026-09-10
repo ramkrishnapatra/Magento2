@@ -12,7 +12,7 @@ class BookingEnquiry extends AbstractModel implements BookingEnquiryInterface
     /**
      * @return void
      */
-    protected function _construct(): void
+    protected function _construct()
     {
         $this->_init(ResourceModel::class);
     }
@@ -20,19 +20,19 @@ class BookingEnquiry extends AbstractModel implements BookingEnquiryInterface
     /**
      * @return int|null
      */
-    public function getEntityId(): ?int
+    public function getEntityId()
     {
-        $val = $this->getData(self::ENTITY_ID);
-        return $val !== null ? (int)$val : null;
+        $id = $this->getData(self::ENTITY_ID);
+        return $id !== null ? (int)$id : null;
     }
 
     /**
-     * @param int $entityId
+     * @param int|null $entityId
      * @return $this
      */
-    public function setEntityId($entityId): self
+    public function setEntityId($entityId)
     {
-        return $this->setData(self::ENTITY_ID, (int)$entityId);
+        return $this->setData(self::ENTITY_ID, $entityId);
     }
 
     /**
@@ -40,15 +40,15 @@ class BookingEnquiry extends AbstractModel implements BookingEnquiryInterface
      */
     public function getPhoneNumber(): ?string
     {
-        $val = $this->getData(self::PHONE_NUMBER);
-        return $val !== null ? (string)$val : null;
+        $phone = $this->getData(self::PHONE_NUMBER);
+        return $phone !== null ? (string)$phone : null;
     }
 
     /**
      * @param string $phoneNumber
      * @return $this
      */
-    public function setPhoneNumber(string $phoneNumber): self
+    public function setPhoneNumber(string $phoneNumber): BookingEnquiryInterface
     {
         return $this->setData(self::PHONE_NUMBER, $phoneNumber);
     }
@@ -58,15 +58,15 @@ class BookingEnquiry extends AbstractModel implements BookingEnquiryInterface
      */
     public function getPreferredSlot(): ?string
     {
-        $val = $this->getData(self::PREFERRED_SLOT);
-        return $val !== null ? (string)$val : null;
+        $slot = $this->getData(self::PREFERRED_SLOT);
+        return $slot !== null ? (string)$slot : null;
     }
 
     /**
      * @param string $preferredSlot
      * @return $this
      */
-    public function setPreferredSlot(string $preferredSlot): self
+    public function setPreferredSlot(string $preferredSlot): BookingEnquiryInterface
     {
         return $this->setData(self::PREFERRED_SLOT, $preferredSlot);
     }
@@ -76,15 +76,15 @@ class BookingEnquiry extends AbstractModel implements BookingEnquiryInterface
      */
     public function getStatus(): ?string
     {
-        $val = $this->getData(self::STATUS);
-        return $val !== null ? (string)$val : null;
+        $status = $this->getData(self::STATUS);
+        return $status !== null ? (string)$status : null;
     }
 
     /**
      * @param string $status
      * @return $this
      */
-    public function setStatus(string $status): self
+    public function setStatus(string $status): BookingEnquiryInterface
     {
         return $this->setData(self::STATUS, $status);
     }
@@ -94,15 +94,15 @@ class BookingEnquiry extends AbstractModel implements BookingEnquiryInterface
      */
     public function getCreatedAt(): ?string
     {
-        $val = $this->getData(self::CREATED_AT);
-        return $val !== null ? (string)$val : null;
+        $date = $this->getData(self::CREATED_AT);
+        return $date !== null ? (string)$date : null;
     }
 
     /**
-     * @param string $createdAt
+     * @param string|null $createdAt
      * @return $this
      */
-    public function setCreatedAt(string $createdAt): self
+    public function setCreatedAt(?string $createdAt): BookingEnquiryInterface
     {
         return $this->setData(self::CREATED_AT, $createdAt);
     }

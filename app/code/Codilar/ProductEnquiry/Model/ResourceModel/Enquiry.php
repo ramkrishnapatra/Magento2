@@ -12,7 +12,7 @@ class Enquiry extends AbstractDb
      *
      * @return void
      */
-    protected function _construct()
+    protected function _construct(): void
     {
         $this->_init('codilar_product_enquiry', 'entity_id');
     }

@@ -41,7 +41,13 @@ class StockAlertRepository implements StockAlertRepositoryInterface
     }
 
     /**
-     * @inheritDoc
+     * Subscribe customer/guest for out-of-stock notification
+     *
+     * @param int $productId
+     * @param string $email
+     * @param int|null $customerId
+     * @return string
+     * @throws LocalizedException
      */
     public function subscribe(int $productId, string $email, ?int $customerId = 0): string
     {

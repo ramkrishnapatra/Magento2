@@ -1,54 +1,92 @@
 <?php
-/** @var Listing $block */
+/** @var \Codilar\BookingEnquiry\Block\Listing $block */
+/** @var \Magento\Framework\Escaper $escaper */
 
-use Codilar\BookingEnquiry\Block\Listing;
+use Magento\Framework\Escaper;
 
-$enquiries = $block->getEnquiries();
+$rawResponse = $block->getEnquiries();
+
+// Extract items safely whether $rawResponse is an Object, DTO, or Array
+$enquiries = [];
+if (is_object($rawResponse)) {
+    if (method_exists($rawResponse, 'getItems')) {
+        $enquiries = $rawResponse->getItems() ?: [];
+    } elseif (method_exists($rawResponse, 'getData')) {
+        $enquiries = $rawResponse->getData('items') ?: [];
+    }
+} elseif (is_array($rawResponse)) {
+    $enquiries = $rawResponse['items'] ?? $rawResponse;
+}
+
+$baseApiUrl = rtrim($block->getBaseUrl(), '/') . '/rest/V1/booking-enquiry/';
 ?>
 
 <div style="max-width: 960px; margin: 30px auto; font-family: sans-serif;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2 style="margin: 0;">Customer Booking Enquiries (FIFO)</h2>
-        <a href="<?= $block->getUrl('booking/index/listing') ?>"
+        <h2 style="margin: 0;"><?= $escaper->escapeHtml(__('Customer Booking Enquiries (FIFO)')) ?></h2>
+        <a href="<?= $escaper->escapeUrl($block->getUrl('*/*/*')) ?>"
            class="action secondary"
-           style="padding: 7px 15px; text-decoration: none; border: 1px solid #ccc; border-radius: 4px; background: #fff; color: #333;">
-            Refresh
+           style="padding: 7px 15px; border: 1px solid #ccc; border-radius: 4px; background: #fff; color: #333; text-decoration: none; font-size: 13px;">
+            <?= $escaper->escapeHtml(__('Refresh Page')) ?>
         </a>
     </div>
+
+    <div id="queue-status-msg" style="display: none; margin-bottom: 15px; padding: 10px; border-radius: 4px; font-size: 13px;"></div>
 
     <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; border: 1px solid #e1e1e1;">
         <thead>
         <tr style="background-color: #f8f8f8; border-bottom: 2px solid #ddd;">
-            <th style="padding: 12px;">#ID</th>
-            <th style="padding: 12px;">Phone Number</th>
-            <th style="padding: 12px;">Preferred Slot</th>
-            <th style="padding: 12px;">Submitted At</th>
-            <th style="padding: 12px;">Status</th>
-            <th style="padding: 12px; text-align: center;">Action</th>
+            <th style="padding: 12px;"><?= $escaper->escapeHtml(__('#ID')) ?></th>
+            <th style="padding: 12px;"><?= $escaper->escapeHtml(__('Phone Number')) ?></th>
+            <th style="padding: 12px;"><?= $escaper->escapeHtml(__('Preferred Slot')) ?></th>
+            <th style="padding: 12px;"><?= $escaper->escapeHtml(__('Submitted At')) ?></th>
+            <th style="padding: 12px;"><?= $escaper->escapeHtml(__('Status')) ?></th>
+            <th style="padding: 12px; text-align: center;"><?= $escaper->escapeHtml(__('Action')) ?></th>
         </tr>
         </thead>
-        <tbody>
+        <tbody id="enquiries-table-body">
         <?php if (!empty($enquiries)): ?>
             <?php foreach ($enquiries as $row): ?>
-                <tr style="border-bottom: 1px solid #eee; background-color: <?= $row['status'] === 'handled' ? '#fcfcfc' : '#ffffff' ?>;">
-                    <td style="padding: 12px;"><?= (int)$row['entity_id'] ?></td>
-                    <td style="padding: 12px; font-weight: bold;"><?= $block->escapeHtml($row['phone_number']) ?></td>
-                    <td style="padding: 12px;"><?= $block->escapeHtml($row['preferred_slot']) ?></td>
-                    <td style="padding: 12px; color: #666;"><?= $block->escapeHtml($row['created_at']) ?></td>
-                    <td style="padding: 12px;">
-                        <?php if ($row['status'] === 'handled'): ?>
+                <?php
+                // Model, DTO aur Array teeno format handle honge
+                if (is_object($row)) {
+                    $id = method_exists($row, 'getEntityId') ? $row->getEntityId() : $row->getData('entity_id');
+                    $phone = method_exists($row, 'getPhoneNumber') ? $row->getPhoneNumber() : $row->getData('phone_number');
+                    $slot = method_exists($row, 'getPreferredSlot') ? $row->getPreferredSlot() : $row->getData('preferred_slot');
+                    $createdAt = method_exists($row, 'getCreatedAt') ? $row->getCreatedAt() : $row->getData('created_at');
+                    $status = method_exists($row, 'getStatus') ? $row->getStatus() : $row->getData('status');
+                } else {
+                    $id = $row['entity_id'] ?? null;
+                    $phone = $row['phone_number'] ?? '';
+                    $slot = $row['preferred_slot'] ?? '';
+                    $createdAt = $row['created_at'] ?? '';
+                    $status = $row['status'] ?? '';
+                }
+
+                // Agar status blank ho toh default pending maan lenge
+                $status = $status ?: 'pending';
+                $isHandled = ($status === 'handled');
+                ?>
+                <tr id="enquiry-row-<?= (int)$id ?>" style="border-bottom: 1px solid #eee; background-color: <?= $isHandled ? '#fcfcfc' : '#ffffff' ?>;">
+                    <td style="padding: 12px;"><?= (int)$id ?></td>
+                    <td style="padding: 12px; font-weight: bold;"><?= $escaper->escapeHtml($phone) ?></td>
+                    <td style="padding: 12px;"><?= $escaper->escapeHtml($slot) ?></td>
+                    <td style="padding: 12px; color: #666;"><?= $escaper->escapeHtml($createdAt) ?></td>
+                    <td style="padding: 12px;" class="col-status">
+                        <?php if ($isHandled): ?>
                             <span style="background: #e6f4ea; color: #137333; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 12px;">Handled</span>
                         <?php else: ?>
                             <span style="background: #fef7e0; color: #b06000; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 12px;">Pending</span>
                         <?php endif; ?>
                     </td>
-                    <td style="padding: 12px; text-align: center;">
-                        <?php if ($row['status'] === 'pending'): ?>
-                            <a href="<?= $block->getUrl('booking/index/updatestatus', ['id' => $row['entity_id']]) ?>"
-                               onclick="return confirm('Mark enquiry #<?= (int)$row['entity_id'] ?> as Handled?');"
-                               style="background: #1979c3; color: #fff; padding: 6px 14px; text-decoration: none; border-radius: 3px; font-size: 12px; font-weight: 600; display: inline-block;">
+                    <td style="padding: 12px; text-align: center;" class="col-action">
+                        <?php if (!$isHandled): ?>
+                            <button type="button"
+                                    class="btn-mark-done"
+                                    data-id="<?= (int)$id ?>"
+                                    style="background: #1979c3; color: #fff; border: none; padding: 6px 14px; border-radius: 3px; font-size: 12px; font-weight: 600; cursor: pointer;">
                                 Mark Done
-                            </a>
+                            </button>
                         <?php else: ?>
                             <span style="color: #999;">—</span>
                         <?php endif; ?>
@@ -57,9 +95,80 @@ $enquiries = $block->getEnquiries();
             <?php endforeach; ?>
         <?php else: ?>
             <tr>
-                <td colspan="6" style="padding: 24px; text-align: center; color: #777;">No booking enquiries found in queue.</td>
+                <td colspan="6" style="padding: 24px; text-align: center; color: #777;">
+                    <?= $escaper->escapeHtml(__('No booking enquiries found in queue.')) ?>
+                </td>
             </tr>
         <?php endif; ?>
         </tbody>
     </table>
 </div>
+
+<script>
+    require(['jquery'], function ($) {
+        'use strict';
+
+        const $statusMsg = $('#queue-status-msg');
+        const baseApiUrl = '<?= $escaper->escapeJs($baseApiUrl) ?>';
+
+        function showStatus(text, isSuccess) {
+            $statusMsg.css({
+                display: 'block',
+                backgroundColor: isSuccess ? '#e8f5e9' : '#ffebee',
+                color: isSuccess ? '#1b5e20' : '#b71c1c',
+                border: '1px solid ' + (isSuccess ? '#a5d6a7' : '#ef9a9a')
+            }).text(text);
+
+            setTimeout(function () {
+                $statusMsg.fadeOut();
+            }, 4000);
+        }
+
+        $('#enquiries-table-body').on('click', '.btn-mark-done', function (e) {
+            e.preventDefault();
+            const id = $(this).data('id');
+            const $btn = $(this);
+
+            if (!id || id <= 0) {
+                showStatus('Invalid Enquiry ID.', false);
+                return;
+            }
+
+            if (!confirm('Mark enquiry #' + id + ' as Handled?')) {
+                return;
+            }
+
+            $btn.prop('disabled', true).text('Updating...');
+
+            fetch(baseApiUrl + id + '/status', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    status: 'handled'
+                })
+            })
+                .then(async (res) => {
+                    const data = await res.json();
+                    if (!res.ok) {
+                        throw new Error(data.message || 'Status update failed.');
+                    }
+                    return data;
+                })
+                .then(data => {
+                    const $row = $('#enquiry-row-' + id);
+                    $row.css('background-color', '#fcfcfc');
+                    $row.find('.col-status').html('<span style="background: #e6f4ea; color: #137333; padding: 4px 10px; border-radius: 12px; font-weight: 600; font-size: 12px;">Handled</span>');
+                    $row.find('.col-action').html('<span style="color: #999;">—</span>');
+
+                    showStatus('Enquiry #' + (data.entity_id || id) + ' marked as handled successfully.', true);
+                })
+                .catch(function (err) {
+                    showStatus(err.message, false);
+                    $btn.prop('disabled', false).text('Mark Done');
+                });
+        });
+    });
+</script>

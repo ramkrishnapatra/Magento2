@@ -1,33 +1,103 @@
 <?php
 /** @var Template $block */
+/** @var Escaper $escaper */
 
+use Magento\Framework\Escaper;
 use Magento\Framework\View\Element\Template;
 
+$apiUrl = rtrim($block->getBaseUrl(), '/') . '/rest/V1/booking-enquiry';
 ?>
-<div style="max-width: 450px; margin: 30px auto; padding: 25px; border: 1px solid #e1e1e1; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-    <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 20px;"><?= __('Schedule a Callback') ?></h2>
+<div style="max-width: 450px; margin: 30px auto; padding: 25px; border: 1px solid #e1e1e1; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); font-family: sans-serif;">
+    <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 20px;"><?= $escaper->escapeHtml(__('Schedule a Callback')) ?></h2>
 
-    <form action="<?= $block->getUrl('booking/index/save') ?>" method="post">
-        <?= $block->getBlockHtml('formkey') ?>
+    <!-- Dynamic Alert Box -->
+    <div id="booking-msg-box" style="display: none; margin-bottom: 16px; padding: 12px; border-radius: 4px; font-size: 13px;"></div>
 
+    <form id="booking-form">
         <div style="margin-bottom: 16px;">
-            <label style="display:block; margin-bottom: 6px; font-weight: 600;">Phone Number</label>
-            <label>
-                <input type="tel" name="phone_number" placeholder="Enter your phone number" required
-                       style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
-            </label>
+            <label for="phone_number" style="display:block; margin-bottom: 6px; font-weight: 600;"><?= $escaper->escapeHtml(__('Phone Number')) ?></label>
+            <input type="tel" id="phone_number" name="phone_number" placeholder="Enter your phone number" required
+                   style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
         </div>
 
         <div style="margin-bottom: 20px;">
-            <label style="display:block; margin-bottom: 6px; font-weight: 600;">Preferred Time Slot</label>
-            <label>
-                <input type="text" name="preferred_slot" placeholder="e.g. Tomorrow between 2 PM - 4 PM" required
-                       style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
-            </label>
+            <label for="preferred_slot" style="display:block; margin-bottom: 6px; font-weight: 600;"><?= $escaper->escapeHtml(__('Preferred Time Slot')) ?></label>
+            <input type="text" id="preferred_slot" name="preferred_slot" placeholder="e.g. Tomorrow between 2 PM - 4 PM" required
+                   style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
         </div>
 
-        <button type="submit" class="action primary" style="width: 100%; padding: 12px; font-size: 15px;">
-            <span>Submit Enquiry</span>
+        <button type="submit" id="booking-submit-btn" class="action primary" style="width: 100%; padding: 12px; font-size: 15px; cursor: pointer;">
+            <span><?= $escaper->escapeHtml(__('Submit Enquiry')) ?></span>
         </button>
     </form>
 </div>
+
+<script>
+    require(['jquery'], function ($) {
+        'use strict';
+
+        const $form = $('#booking-form');
+        const $submitBtn = $('#booking-submit-btn');
+        const $msgBox = $('#booking-msg-box');
+        const postUrl = '<?= $escaper->escapeJs($apiUrl) ?>';
+
+        function notify(text, isSuccess) {
+            $msgBox.css({
+                display: 'block',
+                backgroundColor: isSuccess ? '#e8f5e9' : '#ffebee',
+                color: isSuccess ? '#1b5e20' : '#b71c1c',
+                border: '1px solid ' + (isSuccess ? '#a5d6a7' : '#ef9a9a')
+            }).text(text);
+        }
+
+        $form.on('submit', function (e) {
+            e.preventDefault();
+
+            const phone = $('#phone_number').val().trim();
+            const slot = $('#preferred_slot').val().trim();
+
+            if (!phone || !slot) {
+                notify('Please fill out all required fields.', false);
+                return;
+            }
+
+            $submitBtn.prop('disabled', true).find('span').text('Submitting...');
+            $msgBox.hide();
+
+            fetch(postUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    enquiry: {
+                        phone_number: phone,
+                        preferred_slot: slot
+                    }
+                })
+            })
+                .then(async (res) => {
+                    const data = await res.json();
+                    if (!res.ok) {
+                        throw new Error(data.message || 'Error saving enquiry.');
+                    }
+                    return data;
+                })
+                .then(data => {
+                    if (data && data.entity_id) {
+                        notify('Enquiry submitted successfully! Reference ID: #' + data.entity_id, true);
+                        $form[0].reset();
+                    } else {
+                        notify('Could not process enquiry response.', false);
+                    }
+                })
+                .catch((error) => {
+                    notify(error.message, false);
+                })
+                .finally(() => {
+                    $submitBtn.prop('disabled', false).find('span').text('Submit Enquiry');
+                });
+        });
+    });
+</script>

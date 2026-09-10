@@ -5,11 +5,11 @@ namespace Codilar\BookingEnquiry\Api\Data;
 
 interface BookingEnquiryInterface
 {
-    public const ENTITY_ID = 'entity_id';
-    public const PHONE_NUMBER = 'phone_number';
+    public const ENTITY_ID      = 'entity_id';
+    public const PHONE_NUMBER   = 'phone_number';
     public const PREFERRED_SLOT = 'preferred_slot';
-    public const STATUS = 'status';
-    public const CREATED_AT = 'created_at';
+    public const STATUS         = 'status';
+    public const CREATED_AT     = 'created_at';
 
     public const STATUS_PENDING = 'pending';
     public const STATUS_HANDLED = 'handled';
@@ -17,13 +17,13 @@ interface BookingEnquiryInterface
     /**
      * @return int|null
      */
-    public function getEntityId(): ?int;
+    public function getEntityId();
 
     /**
-     * @param int $entityId
+     * @param int|null $entityId
      * @return $this
      */
-    public function setEntityId(int $entityId): self;
+    public function setEntityId($entityId);
 
     /**
      * @return string|null
@@ -47,16 +47,6 @@ interface BookingEnquiryInterface
      */
     public function setPreferredSlot(string $preferredSlot): self;
 
-    /**
-     * @return string|null
-     */
-    public function getStatus(): ?string;
-
-    /**
-     * @param string $status
-     * @return $this
-     */
-    public function setStatus(string $status): self;
 
     /**
      * @return string|null
@@ -64,8 +54,8 @@ interface BookingEnquiryInterface
     public function getCreatedAt(): ?string;
 
     /**
-     * @param string $createdAt
+     * @param string|null $createdAt
      * @return $this
      */
-    public function setCreatedAt(string $createdAt): self;
+    public function setCreatedAt(?string $createdAt): self;
 }

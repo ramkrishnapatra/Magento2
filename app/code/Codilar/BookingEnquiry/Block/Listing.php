@@ -3,40 +3,56 @@ declare(strict_types=1);
 
 namespace Codilar\BookingEnquiry\Block;
 
-use Codilar\BookingEnquiry\Model\ResourceModel\BookingEnquiry\Collection;
-use Codilar\BookingEnquiry\Model\ResourceModel\BookingEnquiry\CollectionFactory;
+use Magento\Framework\HTTP\Client\Curl;
+use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Framework\View\Element\Template;
 
 class Listing extends Template
 {
     /**
-     * @var CollectionFactory
+     * @var Curl
      */
-    private CollectionFactory $collectionFactory;
+    private Curl $curl;
+
+    /**
+     * @var Json
+     */
+    private Json $json;
 
     /**
      * @param Template\Context $context
-     * @param CollectionFactory $collectionFactory
+     * @param Curl $curl
+     * @param Json $json
      * @param array $data
      */
     public function __construct(
         Template\Context $context,
-        CollectionFactory $collectionFactory,
+        Curl $curl,
+        Json $json,
         array $data = []
     ) {
         parent::__construct($context, $data);
-        $this->collectionFactory = $collectionFactory;
+        $this->curl = $curl;
+        $this->json = $json;
     }
 
     /**
-     * Fetch bookings collection ordered by created_at ASC (FIFO)
+     * Fetch queue by calling REST API from Block
      *
-     * @return Collection
+     * @return array
      */
-    public function getEnquiries(): Collection
+    public function getEnquiries(): array
     {
-        $collection = $this->collectionFactory->create();
-        $collection->setOrder('created_at', Collection::SORT_ORDER_ASC);
-        return $collection;
+        $apiUrl = $this->getBaseUrl() . 'rest/V1/booking-enquiry/queue';
+
+        try {
+            $this->curl->addHeader('Content-Type', 'application/json');
+            $this->curl->get($apiUrl);
+            $response = $this->curl->getBody();
+
+            return $this->json->unserialize($response) ?: [];
+        } catch (\Exception $e) {
+            return [];
+        }
     }
 }
