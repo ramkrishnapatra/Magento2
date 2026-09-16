@@ -1,0 +1,104 @@
+{
+    "magecafe_delivery_zone": {
+        "column": {
+            "entity_id": true,
+            "zone_reference": true,
+            "description": true,
+            "is_remote": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "MAGECAFE_DELIVERY_ZONE_ZONE_REFERENCE": true
+        }
+    },
+    "magecafe_delivery_pincode": {
+        "column": {
+            "entity_id": true,
+            "pincode": true,
+            "zone_id": true
+        },
+        "index": {
+            "MAGECAFE_DELIVERY_PINCODE_ZONE_ID": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "MAGECAFE_DELIVERY_PINCODE_PINCODE": true,
+            "MAGECAFE_DELIVERY_PINCODE_ZONE_ID_MAGECAFE_DELIVERY_ZONE_ENTT_ID": true
+        }
+    },
+    "magecafe_delivery_rate": {
+        "column": {
+            "rate_id": true,
+            "zone_id": true,
+            "website_id": true,
+            "weight_from": true,
+            "weight_to": true,
+            "order_value_from": true,
+            "order_value_to": true,
+            "charge": true,
+            "oversized_surcharge": true
+        },
+        "index": {
+            "IDX_6E15C6B823FC0C0187BD558C101C5AE9": true,
+            "IDX_3DD7A58F35575BE1D48CD21366FC7E85": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "MAGECAFE_DELIVERY_RATE_ZONE_ID_MAGECAFE_DELIVERY_ZONE_ENTITY_ID": true
+        }
+    },
+    "magecafe_delivery_slot": {
+        "column": {
+            "slot_id": true,
+            "slot_reference": true,
+            "start_time": true,
+            "end_time": true,
+            "capacity_per_day": true,
+            "applicable_zones": true,
+            "is_active": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "MAGECAFE_DELIVERY_SLOT_SLOT_REFERENCE": true
+        }
+    },
+    "magecafe_delivery_slot_booking": {
+        "column": {
+            "booking_id": true,
+            "slot_id": true,
+            "delivery_date": true,
+            "quote_id": true,
+            "order_id": true,
+            "status": true,
+            "reserved_at": true,
+            "confirmed_at": true
+        },
+        "index": {
+            "MAGECAFE_DELIVERY_SLOT_BOOKING_SLOT_ID_DELIVERY_DATE_STATUS": true,
+            "MAGECAFE_DELIVERY_SLOT_BOOKING_QUOTE_ID": true,
+            "MAGECAFE_DELIVERY_SLOT_BOOKING_ORDER_ID": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "FK_3D722E5BDE0C103D84AEF2BA45EAD14F": true
+        }
+    },
+    "quote": {
+        "column": {
+            "delivery_slot_id": true,
+            "delivery_date": true
+        },
+        "index": {
+            "QUOTE_DELIVERY_SLOT_ID": true
+        }
+    },
+    "sales_order": {
+        "column": {
+            "delivery_slot_id": true,
+            "delivery_date": true
+        },
+        "index": {
+            "SALES_ORDER_DELIVERY_SLOT_ID": true
+        }
+    }
+}

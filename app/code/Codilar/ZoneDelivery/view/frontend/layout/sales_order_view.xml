@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceContainer name="content">
+            <block class="Codilar\ZoneDelivery\Block\Order\DeliverySlotInfo"
+                   name="codilar.zonedelivery.customer.order.slot.info"
+                   template="Codilar_ZoneDelivery::order/delivery_slot_info.phtml"
+                   after="sales.order.view"/>
+        </referenceContainer>
+    </body>
+</page>

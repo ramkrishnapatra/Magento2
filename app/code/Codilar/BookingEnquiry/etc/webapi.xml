@@ -22,7 +22,7 @@
     <route url="/V1/booking-enquiry/:entityId" method="GET">
         <service class="Codilar\BookingEnquiry\Api\BookingEnquiryRepositoryInterface" method="getById"/>
         <resources>
-            <resource ref="anonymous"/>
+            <resource ref="self"/>
         </resources>
     </route>
 

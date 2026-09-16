@@ -5,50 +5,48 @@ namespace Codilar\BookingEnquiry\Api;
 
 use Codilar\BookingEnquiry\Api\Data\BookingEnquiryInterface;
 use Codilar\BookingEnquiry\Api\Data\RequestItemInterface;
-use Codilar\BookingEnquiry\Api\Data\ResponseItemInterface;
 use Codilar\BookingEnquiry\Api\Data\ResponseGetDataItemInterface;
+use Codilar\BookingEnquiry\Api\Data\ResponseItemInterface;
 
 interface BookingEnquiryRepositoryInterface
 {
     /**
-     * @param RequestItemInterface $enquiry
-     * @return ResponseItemInterface
+     * @param \Codilar\BookingEnquiry\Api\Data\RequestItemInterface $enquiry
+     * @return \Codilar\BookingEnquiry\Api\Data\ResponseItemInterface
      */
     public function save(RequestItemInterface $enquiry): ResponseItemInterface;
 
     /**
      * @param int $entityId
-     * @return ResponseGetDataItemInterface
+     * @return \Codilar\BookingEnquiry\Api\Data\ResponseGetDataItemInterface
      */
     public function getById(int $entityId): ResponseGetDataItemInterface;
 
     /**
      * @param int $id
      * @param string $status
-     * @return ResponseItemInterface
+     * @return \Codilar\BookingEnquiry\Api\Data\ResponseItemInterface
      */
     public function updateStatus(int $id, string $status): ResponseItemInterface;
 
     /**
-     * @return ResponseGetDataItemInterface
+     * @return \Codilar\BookingEnquiry\Api\Data\ResponseGetDataItemInterface
      */
     public function getQueueList(): ResponseGetDataItemInterface;
 
     /**
-     * @param BookingEnquiryInterface $enquiry
-     * @return ResponseItemInterface
+     * @param \Codilar\BookingEnquiry\Api\Data\BookingEnquiryInterface $enquiry
+     * @return \Codilar\BookingEnquiry\Api\Data\ResponseItemInterface
      */
     public function delete(BookingEnquiryInterface $enquiry): ResponseItemInterface;
 
     /**
      * @param int $entityId
-     * @return ResponseItemInterface
+     * @return \Codilar\BookingEnquiry\Api\Data\ResponseItemInterface
      */
     public function deleteById(int $entityId): ResponseItemInterface;
 
     /**
-     * Get all booking enquiries for admin
-     *
      * @return \Codilar\BookingEnquiry\Api\Data\ResponseGetDataItemInterface
      */
     public function getAdminQueueList(): ResponseGetDataItemInterface;

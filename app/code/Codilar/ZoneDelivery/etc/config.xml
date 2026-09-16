@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <carriers>
+            <zonedelivery>
+                <active>1</active>
+                <model>Codilar\ZoneDelivery\Model\Carrier\ZoneDelivery</model>
+                <title>Zone Delivery Service</title>
+                <name>Standard Zone Delivery</name>
+                <free_shipping_threshold>999</free_shipping_threshold>
+                <cutoff_time>18:00:00</cutoff_time>
+                <showmethod>0</showmethod>
+                <specificerrmsg>This shipping method is currently unavailable for your delivery pincode.</specificerrmsg>
+                <sallowspecific>0</sallowspecific>
+            </zonedelivery>
+        </carriers>
+    </default>
+</config>

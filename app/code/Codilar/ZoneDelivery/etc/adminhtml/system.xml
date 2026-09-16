@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="carriers">
+            <group id="zonedelivery" translate="label" type="text" sortOrder="250" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Zone &amp; Slot Delivery Service</label>
+
+                <field id="active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+
+                <field id="title" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Title</label>
+                </field>
+
+                <field id="name" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Method Name</label>
+                </field>
+
+                <field id="free_shipping_threshold" translate="label comment" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Free Shipping Threshold Subtotal</label>
+                    <comment>Leave blank to disable subtotal-based free shipping.</comment>
+                    <validate>validate-number validate-zero-or-greater</validate>
+                </field>
+
+                <field id="cutoff_time" translate="label comment" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Daily Order Cut-off Time</label>
+                    <comment>Format: HH:mm:ss (24-hour time, e.g., 18:00:00). Bookings placed after this time advance to subsequent days.</comment>
+                </field>
+
+                <field id="showmethod" translate="label comment" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                    <label>Show Method if Not Applicable</label>
+                    <comment>If Yes, the method will display with the error message below when the customer's pincode is not serviceable.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+
+                <field id="specificerrmsg" translate="label" type="textarea" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Displayed Error Message</label>
+                    <depends>
+                        <field id="showmethod">1</field>
+                    </depends>
+                </field>
+
+                <field id="sort_order" translate="label" type="text" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Sort Order</label>
+                    <validate>validate-number</validate>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

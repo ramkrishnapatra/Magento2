@@ -1,0 +1,41 @@
+<?php
+/**
+ * @var \Codilar\ZoneDelivery\Block\Order\DeliverySlotInfo $block
+ */
+$order = $block->getOrder();
+if (!$order) {
+    return;
+}
+
+$deliveryDate = (string)$order->getData('delivery_date');
+$slotId = (int)$order->getData('delivery_slot_id');
+?>
+<?php if (!empty($deliveryDate) && $slotId > 0): ?>
+    <table class="delivery-slot-email-table" style="width: 100%; border: 1px solid #eaeaea; border-collapse: collapse; margin-top: 15px; margin-bottom: 15px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+        <thead>
+        <tr style="background-color: #f8f8f8;">
+            <th colspan="2" style="text-align: left; padding: 10px 12px; font-size: 13px; font-weight: bold; color: #333333; border-bottom: 1px solid #eaeaea;">
+                <?= $block->escapeHtml(__('Scheduled Delivery Details')) ?>
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td style="padding: 8px 12px; width: 40%; font-weight: bold; color: #666666; border-bottom: 1px solid #f2f2f2; font-size: 12px;">
+                <?= $block->escapeHtml(__('Delivery Date:')) ?>
+            </td>
+            <td style="padding: 8px 12px; color: #333333; border-bottom: 1px solid #f2f2f2; font-size: 12px;">
+                <?= $block->escapeHtml(date('l, F d, Y', strtotime($deliveryDate))) ?>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 12px; width: 40%; font-weight: bold; color: #666666; font-size: 12px;">
+                <?= $block->escapeHtml(__('Delivery Slot:')) ?>
+            </td>
+            <td style="padding: 8px 12px; color: #333333; font-size: 12px;">
+                <?= $block->escapeHtml($block->getSlotReference($slotId)) ?>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+<?php endif; ?>

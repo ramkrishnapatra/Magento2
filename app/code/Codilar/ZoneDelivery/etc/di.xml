@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+
+    <!-- Service Contract Binding for Zone Entity -->
+    <preference for="Codilar\ZoneDelivery\Api\Data\ZoneInterface"
+                type="Codilar\ZoneDelivery\Model\Zone"/>
+
+    <!-- Service Contract Binding for Zone Repository -->
+    <preference for="Codilar\ZoneDelivery\Api\ZoneRepositoryInterface"
+                type="Codilar\ZoneDelivery\Model\ZoneRepository"/>
+
+    <!-- Service Contract Binding for Pincode Entity -->
+    <preference for="Codilar\ZoneDelivery\Api\Data\PincodeInterface"
+                type="Codilar\ZoneDelivery\Model\Pincode"/>
+
+    <!-- Service Contract Binding for Pincode Repository -->
+    <preference for="Codilar\ZoneDelivery\Api\PincodeRepositoryInterface"
+                type="Codilar\ZoneDelivery\Model\PincodeRepository"/>
+
+    <!-- Service Contract Binding for Rate Entity -->
+    <preference for="Codilar\ZoneDelivery\Api\Data\RateInterface"
+                type="Codilar\ZoneDelivery\Model\Rate"/>
+
+    <!-- Service Contract Binding for Rate Repository -->
+    <preference for="Codilar\ZoneDelivery\Api\RateRepositoryInterface"
+                type="Codilar\ZoneDelivery\Model\RateRepository"/>
+
+    <!-- Service Contract Binding for Slot Entity -->
+    <preference for="Codilar\ZoneDelivery\Api\Data\SlotInterface"
+                type="Codilar\ZoneDelivery\Model\Slot"/>
+
+    <!-- Service Contract Binding for Slot Repository -->
+    <preference for="Codilar\ZoneDelivery\Api\SlotRepositoryInterface"
+                type="Codilar\ZoneDelivery\Model\SlotRepository"/>
+
+    <!-- Service Contract Binding for Slot Booking Entity -->
+    <preference for="Codilar\ZoneDelivery\Api\Data\SlotBookingInterface"
+                type="Codilar\ZoneDelivery\Model\SlotBooking"/>
+
+    <!-- Service Contract Binding for Slot Booking Repository -->
+    <preference for="Codilar\ZoneDelivery\Api\SlotBookingRepositoryInterface"
+                type="Codilar\ZoneDelivery\Model\SlotBookingRepository"/>
+
+    <!-- Service Contract DI Preferences for Slot Management API -->
+    <preference for="Codilar\ZoneDelivery\Api\SlotManagementInterface"
+                type="Codilar\ZoneDelivery\Model\SlotManagement"/>
+    <preference for="Codilar\ZoneDelivery\Api\Data\AvailableSlotInterface"
+                type="Codilar\ZoneDelivery\Model\Data\AvailableSlot"/>
+
+<!--date Management-->
+    <preference for="Codilar\ZoneDelivery\Api\DateManagementInterface"
+                type="Codilar\ZoneDelivery\Model\DateManagement"/>
+
+    <!-- CLI Import Command Registration -->
+    <type name="Magento\Framework\Console\CommandListInterface">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="codilar_zonedelivery_import" xsi:type="object">Codilar\ZoneDelivery\Console\Command\ImportDeliveryDataCommand</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Plugin to intercept checkout shipping information and persist slot data to Quote -->
+    <type name="Magento\Checkout\Api\ShippingInformationManagementInterface">
+        <plugin name="codilar_zonedelivery_save_slot_to_quote"
+                type="Codilar\ZoneDelivery\Plugin\Checkout\Model\ShippingInformationManagementPlugin"
+                sortOrder="10"
+                disabled="false"/>
+    </type>
+</config>

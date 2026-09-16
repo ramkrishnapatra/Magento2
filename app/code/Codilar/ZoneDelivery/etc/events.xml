@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+
+    <!-- 1. Copy delivery slot attributes to order object prior to database insert -->
+    <event name="sales_model_service_quote_submit_before">
+        <observer name="magecafe_zonedelivery_save_slot_to_order_before"
+                  instance="Codilar\ZoneDelivery\Observer\SaveOrderDeliverySlotObserver"/>
+    </event>
+
+    <!-- 2. Transfer and guarantee persistence on sales_order record -->
+    <event name="sales_model_service_quote_submit_success">
+        <observer name="magecafe_zonedelivery_transfer_slot_to_order"
+                  instance="Codilar\ZoneDelivery\Observer\TransferSlotToOrderObserver"/>
+        <observer name="magecafe_zonedelivery_confirm_slot_booking_concurrency"
+                  instance="Codilar\ZoneDelivery\Observer\ConfirmSlotBookingObserver"/>
+    </event>
+</config>

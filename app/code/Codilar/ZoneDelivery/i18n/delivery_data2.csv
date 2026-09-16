@@ -1,0 +1,19 @@
+type,zone_reference,description,is_remote,pincode,website_id,weight_from,weight_to,order_value_from,order_value_to,charge,oversized_surcharge,slot_reference,start_time,end_time,capacity_per_day,applicable_zones
+zone,ZONE_METRO,Kolkata Urban Metro Area,0,,,,,,,,,,,,
+zone,ZONE_REGIONAL,West Bengal Semi-Urban Region,0,,,,,,,,,,,,
+zone,ZONE_REMOTE,Hilly & Remote Destination,1,,,,,,,,,,,,
+pincode,ZONE_METRO,,,700001,,,,,,,,,,,,
+pincode,ZONE_REGIONAL,,,721642,,,,,,,,,,,,
+pincode,ZONE_REMOTE,,,799001,,,,,,,,,,,,
+rate,ZONE_METRO,,,,0,0.000,5.000,0.00,999.99,40.00,50.00,,,,
+rate,ZONE_METRO,,,,0,5.001,20.000,0.00,999.99,70.00,50.00,,,,
+rate,ZONE_METRO,,,,0,0.000,20.000,1000.00,4999.99,20.00,50.00,,,,
+rate,ZONE_REGIONAL,,,,0,0.000,5.000,0.00,999.99,60.00,80.00,,,,
+rate,ZONE_REGIONAL,,,,0,5.001,20.000,0.00,999.99,110.00,80.00,,,,
+rate,ZONE_REGIONAL,,,,0,0.000,20.000,1000.00,4999.99,40.00,80.00,,,,
+rate,ZONE_REMOTE,,,,0,0.000,5.000,0.00,999.99,120.00,150.00,,,,
+rate,ZONE_REMOTE,,,,0,5.001,20.000,0.00,999.99,200.00,150.00,,,,
+rate,ZONE_REMOTE,,,,0,0.000,20.000,1000.00,4999.99,90.00,150.00,,,,
+slot,,,,,,,,,,,,SLOT_MORNING,09:00:00,11:00:00,10,"ZONE_METRO,ZONE_REGIONAL"
+slot,,,,,,,,,,,,SLOT_EVENING,16:00:00,18:00:00,5,"ZONE_METRO,ZONE_REGIONAL,ZONE_REMOTE"
+slot,,,,,,,,,,,,SLOT_EXCLUSIVE_TEST,13:00:00,15:00:00,1,"ZONE_METRO,ZONE_REGIONAL"

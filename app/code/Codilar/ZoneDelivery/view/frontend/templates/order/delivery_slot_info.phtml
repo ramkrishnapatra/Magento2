@@ -1,0 +1,31 @@
+<?php
+/** @var \Codilar\ZoneDelivery\Block\Order\DeliverySlotInfo $block */
+$order = $block->getOrder();
+if (!$order) {
+    return;
+}
+
+$deliveryDate = $order->getData('delivery_date');
+$slotId = (int)$order->getData('delivery_slot_id');
+?>
+<?php if ($deliveryDate && $slotId): ?>
+    <div class="block block-order-details-view" style="margin-top: 25px; margin-bottom: 25px;">
+        <div class="block-title" style="border-bottom: 1px solid #cccccc; padding-bottom: 8px;">
+            <strong style="font-size: 1.8rem; font-weight: 600;"><?= $block->escapeHtml(__('Scheduled Delivery Schedule')) ?></strong>
+        </div>
+        <div class="block-content" style="padding-top: 15px;">
+            <div class="box box-order-shipping-method">
+                <div class="box-content">
+                    <p>
+                        <strong><?= $block->escapeHtml(__('Delivery Date:')) ?></strong>
+                        <span><?= $block->escapeHtml(date('l, F d, Y', strtotime((string)$deliveryDate))) ?></span>
+                    </p>
+                    <p>
+                        <strong><?= $block->escapeHtml(__('Delivery Slot:')) ?></strong>
+                        <span><?= $block->escapeHtml($block->getSlotReference($slotId)) ?></span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>

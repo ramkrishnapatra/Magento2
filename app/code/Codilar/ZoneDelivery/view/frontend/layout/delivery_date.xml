@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <block class="Codilar\ZoneDelivery\Block\Order\DeliverySlotInfo"
+               name="codilar.zonedelivery.email.slot.info"
+               template="Codilar_ZoneDelivery::email/delivery_slot_info.phtml">
+            <!-- Ensure order/order_id gets bound if passed through layout arguments -->
+        </block>
+    </body>
+</page>

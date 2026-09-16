@@ -1,0 +1,84 @@
+<!--
+/**
+ * Codilar ZoneDelivery
+ * Delivery date (Native Calendar) & slot selector template.
+ * Fully compliant with BRD-04 BR-02 & FR-07.
+ */
+-->
+<div class="zonedelivery-slot-selector"
+     data-bind="visible: isSlotSelectorVisible"
+     style="display: none; margin-top: 15px; padding: 15px; border: 1px solid #e3e3e3; border-radius: 4px; background: #fafafa;">
+
+    <fieldset class="fieldset zonedelivery-fieldset">
+        <div class="step-title" data-role="title" style="margin-bottom: 12px; font-weight: 600; font-size: 16px;">
+            <span data-bind="i18n: 'Choose Your Delivery Date &amp; Slot'"></span>
+        </div>
+
+        <!-- ko if: isLoading() -->
+        <div class="zonedelivery-loading-mask" style="font-style: italic; color: #666; margin-bottom: 10px;">
+            <span data-bind="i18n: 'Fetching available slots...'"></span>
+        </div>
+        <!-- /ko -->
+
+        <!-- Delivery Date (HTML5 Calendar) -->
+        <div class="field required zonedelivery-date-field" style="margin-bottom: 15px;">
+            <label class="label" for="zonedelivery-date">
+                <span data-bind="i18n: 'Delivery Date'"></span>
+            </label>
+            <div class="control" style="margin-top: 5px;">
+                <input class="input-text required-entry"
+                       type="date"
+                       id="zonedelivery-date"
+                       name="zonedelivery_date"
+                       autocomplete="off"
+                       style="width: 100%; max-width: 320px; padding: 6px 10px; border: 1px solid #ccc; border-radius: 3px;"
+                       data-bind="value: selectedDate,
+                                  valueUpdate: 'change',
+                                  attr: {min: minDate},
+                                  event: {change: onDateChange},
+                                  disable: isLoading"/>
+            </div>
+            <!-- ko if: leadTimeNotice -->
+            <div style="font-size: 12px; color: #e65100; margin-top: 4px;">
+                <span data-bind="text: leadTimeNotice"></span>
+            </div>
+            <!-- /ko -->
+        </div>
+
+        <!-- Delivery Slot Dropdown -->
+        <div class="field required zonedelivery-slot-field"
+             style="margin-bottom: 15px;"
+             data-bind="visible: availableSlots().length > 0">
+            <label class="label" for="zonedelivery-slot">
+                <span data-bind="i18n: 'Delivery Slot'"></span>
+            </label>
+            <div class="control" style="margin-top: 5px;">
+                <select class="select required-entry"
+                        id="zonedelivery-slot"
+                        name="zonedelivery_slot"
+                        style="width: 100%; max-width: 320px;"
+                        data-bind="options: availableSlots,
+                                   optionsText: function (slot) {
+                                       return slot.slot_reference + ' (' + slot.start_time + ' - ' + slot.end_time + ')';
+                                   },
+                                   optionsValue: 'slot_id',
+                                   value: selectedSlotId,
+                                   optionsCaption: $t('-- Please Select a Slot --'),
+                                   disable: isLoading"></select>
+            </div>
+        </div>
+
+        <!-- Notice & Error Messaging -->
+        <div class="message message-notice notice zonedelivery-no-slots"
+             style="margin-top: 10px; padding: 8px 12px; background: #fffbbb; border: 1px solid #f1a834; border-radius: 3px;"
+             data-bind="visible: hasNoSlots()">
+            <span data-bind="i18n: 'No delivery slots are available for the selected date. Please choose another date.'"></span>
+        </div>
+
+        <div class="message message-error error zonedelivery-error-message"
+             style="margin-top: 10px; padding: 8px 12px; background: #fdeaea; border: 1px solid #e02b27; border-radius: 3px; color: #e02b27;"
+             data-bind="visible: errorMessage().length > 0">
+            <span data-bind="text: errorMessage"></span>
+        </div>
+    </fieldset>
+</div>

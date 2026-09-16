@@ -13,7 +13,6 @@ use Codilar\BookingEnquiry\Model\Api\ResponseGetDataItemFactory;
 use Codilar\BookingEnquiry\Model\ResourceModel\BookingEnquiry as ResourceBookingEnquiry;
 use Codilar\BookingEnquiry\Model\ResourceModel\BookingEnquiry\CollectionFactory;
 use Exception;
-use Magento\Framework\App\RequestInterface;
 use Magento\Framework\App\Response\Http as HttpResponse;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -26,7 +25,6 @@ class BookingEnquiryRepository implements BookingEnquiryRepositoryInterface
         private ResponseItemInterfaceFactory $responseFactory,
         private ResponseGetDataItemFactory $getResponseFactory,
         private HttpResponse $httpResponse,
-        private RequestInterface $request,
         private ErrorProcessor $errorProcessor,
         private ResourceBookingEnquiry $resource,
         private BookingEnquiryFactory $bookingEnquiryFactory,
@@ -35,53 +33,20 @@ class BookingEnquiryRepository implements BookingEnquiryRepositoryInterface
     }
 
     /**
-     * Set dynamic HTTP code directly on response header
+     * Set dynamic HTTP code directly on response header and return the integer code
      */
-    private function syncDynamicHttpCode(?Throwable $exception = null): void
+    private function syncDynamicHttpCode(Throwable $exception): int
     {
-        if ($exception !== null) {
-            $e = $exception instanceof Exception ? $exception : new Exception($exception->getMessage(), 0, $exception);
-            $code = $this->errorProcessor->maskException($e)->getHttpCode();
-            $this->httpResponse->setHttpResponseCode($code);
-            return;
-        }
-
-        $this->httpResponse->setHttpResponseCode($this->request->isPost() ? 201 : 200);
-    }
-
-    /**
-     * Action Response - Reads status code dynamically via getHttpResponseCode()
-     */
-    private function buildActionResponse(string $message, ?Throwable $exception = null): ResponseItemInterface
-    {
-        $this->syncDynamicHttpCode($exception);
-
-        /** @var ResponseItemInterface $response */
-        $response = $this->responseFactory->create();
-        $response->setStatusCode($this->httpResponse->getHttpResponseCode());
-        $response->setMessage($message);
-
-        return $response;
-    }
-
-    /**
-     * GET Response - Reads status code dynamically via getHttpResponseCode()
-     */
-    private function buildGetDataResponse(string $message, ?array $payload = null, ?Throwable $exception = null): ResponseGetDataItemInterface
-    {
-        $this->syncDynamicHttpCode($exception);
-
-        /** @var ResponseGetDataItemInterface $response */
-        $response = $this->getResponseFactory->create();
-        $response->setStatusCode($this->httpResponse->getHttpResponseCode());
-        $response->setMessage($message);
-        $response->setDataPayload($payload);
-
-        return $response;
+        $e = $exception instanceof Exception ? $exception : new Exception($exception->getMessage(), 0, $exception);
+        $code = (int)$this->errorProcessor->maskException($e)->getHttpCode();
+        $this->httpResponse->setHttpResponseCode($code);
+        return $code;
     }
 
     public function save(RequestItemInterface $enquiry): ResponseItemInterface
     {
+        /** @var ResponseItemInterface $response */
+        $response = $this->responseFactory->create();
         try {
             $model = $this->bookingEnquiryFactory->create();
 
@@ -91,14 +56,24 @@ class BookingEnquiryRepository implements BookingEnquiryRepositoryInterface
 
             $this->resource->save($model);
 
-            return $this->buildActionResponse('Booking enquiry submitted successfully.');
+            $this->httpResponse->setHttpResponseCode(201);
+            $response->setStatusCode(201);
+            $response->setMessage('Booking enquiry submitted successfully.');
+
+            return $response;
         } catch (Throwable $e) {
-            return $this->buildActionResponse($e->getMessage(), $e);
+            $code = $this->syncDynamicHttpCode($e);
+            $response->setStatusCode($code);
+            $response->setMessage($e->getMessage());
+
+            return $response;
         }
     }
 
     public function getById(int $entityId): ResponseGetDataItemInterface
     {
+        /** @var ResponseGetDataItemInterface $response */
+        $response = $this->getResponseFactory->create();
         try {
             $model = $this->bookingEnquiryFactory->create();
             $this->resource->load($model, $entityId);
@@ -115,14 +90,26 @@ class BookingEnquiryRepository implements BookingEnquiryRepositoryInterface
                 'created_at'     => (string)$model->getData('created_at')
             ];
 
-            return $this->buildGetDataResponse('Booking enquiry fetched successfully.', $data);
+            $this->httpResponse->setHttpResponseCode(200);
+            $response->setStatusCode(200);
+            $response->setMessage('Booking enquiry fetched successfully.');
+            $response->setDataPayload($data);
+
+            return $response;
         } catch (Throwable $e) {
-            return $this->buildGetDataResponse($e->getMessage(), null, $e);
+            $code = $this->syncDynamicHttpCode($e);
+            $response->setStatusCode($code);
+            $response->setMessage($e->getMessage());
+            $response->setDataPayload(null);
+
+            return $response;
         }
     }
 
     public function updateStatus(int $id, string $status): ResponseItemInterface
     {
+        /** @var ResponseItemInterface $response */
+        $response = $this->responseFactory->create();
         try {
             $model = $this->bookingEnquiryFactory->create();
             $this->resource->load($model, $id);
@@ -150,14 +137,24 @@ class BookingEnquiryRepository implements BookingEnquiryRepositoryInterface
             $model->setData('status', $status);
             $this->resource->save($model);
 
-            return $this->buildActionResponse(sprintf('Status updated to %s successfully.', $status));
+            $this->httpResponse->setHttpResponseCode(200);
+            $response->setStatusCode(200);
+            $response->setMessage(sprintf('Status updated to %s successfully.', $status));
+
+            return $response;
         } catch (Throwable $e) {
-            return $this->buildActionResponse($e->getMessage(), $e);
+            $code = $this->syncDynamicHttpCode($e);
+            $response->setStatusCode($code);
+            $response->setMessage($e->getMessage());
+
+            return $response;
         }
     }
 
     public function getQueueList(): ResponseGetDataItemInterface
     {
+        /** @var ResponseGetDataItemInterface $response */
+        $response = $this->getResponseFactory->create();
         try {
             $collection = $this->collectionFactory->create();
             $collection->setOrder('entity_id', 'ASC');
@@ -174,24 +171,47 @@ class BookingEnquiryRepository implements BookingEnquiryRepositoryInterface
                 ];
             }
 
-            return $this->buildGetDataResponse('Queue list fetched successfully.', $items);
+            $this->httpResponse->setHttpResponseCode(200);
+            $response->setStatusCode(200);
+            $response->setMessage('Queue list fetched successfully.');
+            $response->setDataPayload($items);
+
+            return $response;
         } catch (Throwable $e) {
-            return $this->buildGetDataResponse($e->getMessage(), [], $e);
+            $code = $this->syncDynamicHttpCode($e);
+            $response->setStatusCode($code);
+            $response->setMessage($e->getMessage());
+            $response->setDataPayload([]);
+
+            return $response;
         }
     }
 
     public function delete(BookingEnquiryInterface $enquiry): ResponseItemInterface
     {
+        /** @var ResponseItemInterface $response */
+        $response = $this->responseFactory->create();
         try {
             $this->resource->delete($enquiry);
-            return $this->buildActionResponse('Booking enquiry deleted successfully.');
+
+            $this->httpResponse->setHttpResponseCode(200);
+            $response->setStatusCode(200);
+            $response->setMessage('Booking enquiry deleted successfully.');
+
+            return $response;
         } catch (Throwable $e) {
-            return $this->buildActionResponse($e->getMessage(), $e);
+            $code = $this->syncDynamicHttpCode($e);
+            $response->setStatusCode($code);
+            $response->setMessage($e->getMessage());
+
+            return $response;
         }
     }
 
     public function deleteById(int $entityId): ResponseItemInterface
     {
+        /** @var ResponseItemInterface $response */
+        $response = $this->responseFactory->create();
         try {
             $model = $this->bookingEnquiryFactory->create();
             $this->resource->load($model, $entityId);
@@ -202,23 +222,27 @@ class BookingEnquiryRepository implements BookingEnquiryRepositoryInterface
 
             $this->resource->delete($model);
 
-            return $this->buildActionResponse(sprintf('Enquiry ID %d deleted successfully.', $entityId));
+            $this->httpResponse->setHttpResponseCode(200);
+            $response->setStatusCode(200);
+            $response->setMessage(sprintf('Enquiry ID %d deleted successfully.', $entityId));
+
+            return $response;
         } catch (Throwable $e) {
-            return $this->buildActionResponse($e->getMessage(), $e);
+            $code = $this->syncDynamicHttpCode($e);
+            $response->setStatusCode($code);
+            $response->setMessage($e->getMessage());
+
+            return $response;
         }
     }
 
-    /**
-     * Admin queue fetch: Returns all rows with complete details
-     *
-     * @return ResponseGetDataItemInterface
-     */
     public function getAdminQueueList(): ResponseGetDataItemInterface
     {
+        /** @var ResponseGetDataItemInterface $response */
+        $response = $this->getResponseFactory->create();
         try {
-            /** @var \Codilar\BookingEnquiry\Model\ResourceModel\BookingEnquiry\Collection $collection */
             $collection = $this->collectionFactory->create();
-            $collection->setOrder('entity_id', 'DESC'); // Admin ke liye latest records pehle show karna better practice hai
+            $collection->setOrder('entity_id', 'DESC');
 
             $items = [];
             foreach ($collection as $item) {
@@ -229,13 +253,23 @@ class BookingEnquiryRepository implements BookingEnquiryRepositoryInterface
                     'preferred_slot' => (string)($raw['preferred_slot'] ?? ''),
                     'status'         => (string)($raw['status'] ?? ''),
                     'created_at'     => (string)($raw['created_at'] ?? ''),
-                    'updated_at'     => (string)($raw['updated_at'] ?? '') // Admin ko updated_at bhi provide kar sakte hain
+                    'updated_at'     => (string)($raw['updated_at'] ?? '')
                 ];
             }
 
-            return $this->buildGetDataResponse('Admin queue list fetched successfully.', $items);
+            $this->httpResponse->setHttpResponseCode(200);
+            $response->setStatusCode(200);
+            $response->setMessage('Admin queue list fetched successfully.');
+            $response->setDataPayload($items);
+
+            return $response;
         } catch (Throwable $e) {
-            return $this->buildGetDataResponse($e->getMessage(), [], $e);
+            $code = $this->syncDynamicHttpCode($e);
+            $response->setStatusCode($code);
+            $response->setMessage($e->getMessage());
+            $response->setDataPayload([]);
+
+            return $response;
         }
     }
 }

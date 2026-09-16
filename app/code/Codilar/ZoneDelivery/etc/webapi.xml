@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Webapi:etc/webapi.xsd">
+    <route url="/V1/delivery/slots/available" method="GET">
+        <service class="Codilar\ZoneDelivery\Api\SlotManagementInterface" method="getAvailableSlots"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+
+    <route url="/V1/zonedelivery/available-dates/:pincode" method="GET">
+        <service class="Codilar\ZoneDelivery\Api\DateManagementInterface" method="getAvailableDates"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+</routes>
