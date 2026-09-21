@@ -20,22 +20,4 @@ class Pincode extends AbstractDb
     {
         $this->_init('magecafe_delivery_pincode', 'entity_id');
     }
-
-    /**
-     * Resolve Zone ID directly by postal code for fast shipping calculation
-     *
-     * @param string $pincode
-     * @return int|null
-     */
-    public function getZoneIdByPincode(string $pincode): ?int
-    {
-        $connection = $this->getConnection();
-        $select = $connection->select()
-            ->from($this->getMainTable(), 'zone_id')
-            ->where('pincode = :pincode')
-            ->limit(1);
-
-        $zoneId = $connection->fetchOne($select, ['pincode' => trim($pincode)]);
-        return $zoneId !== false && $zoneId !== null ? (int)$zoneId : null;
-    }
 }

@@ -21,8 +21,6 @@ use Magento\Framework\Exception\NoSuchEntityException;
  */
 class PincodeRepository implements PincodeRepositoryInterface
 {
-
-
     /**
      * @param PincodeResource $resource
      * @param PincodeFactory $pincodeFactory
@@ -37,7 +35,6 @@ class PincodeRepository implements PincodeRepositoryInterface
         private SearchResultsInterfaceFactory $searchResultsFactory,
         private CollectionProcessorInterface $collectionProcessor
     ) {
-
     }
 
     /**
@@ -86,6 +83,20 @@ class PincodeRepository implements PincodeRepositoryInterface
             );
         }
         return $pincodeModel;
+    }
+
+    /**
+     * @param $pincode
+     * @return int|null
+     */
+    public function getZoneIdByPincode($pincode)
+    {
+        $collection = $this->collectionFactory->create();
+        $collection->addPincodeRangeFilter($pincode);
+        $collection->setPageSize(1);
+
+        $item = $collection->getFirstItem();
+        return $item->getId() ? (int) $item->getZoneId() : null;
     }
 
     /**

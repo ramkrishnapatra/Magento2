@@ -14,8 +14,10 @@
     "magecafe_delivery_pincode": {
         "column": {
             "entity_id": true,
-            "pincode": true,
-            "zone_id": true
+            "pincode": false,
+            "zone_id": true,
+            "pincode_from": true,
+            "pincode_to": true
         },
         "index": {
             "MAGECAFE_DELIVERY_PINCODE_ZONE_ID": true

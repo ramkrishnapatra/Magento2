@@ -5,6 +5,7 @@ namespace Codilar\ZoneDelivery\Model;
 
 use Codilar\ZoneDelivery\Api\Data\AvailableSlotInterface;
 use Codilar\ZoneDelivery\Api\Data\AvailableSlotInterfaceFactory;
+use Codilar\ZoneDelivery\Api\PincodeRepositoryInterface;
 use Codilar\ZoneDelivery\Api\SlotManagementInterface;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
@@ -12,20 +13,20 @@ use Psr\Log\LoggerInterface;
 
 class SlotManagement implements SlotManagementInterface
 {
-
     /**
      * @param ResourceConnection $resourceConnection
      * @param AvailableSlotInterfaceFactory $slotFactory
      * @param TimezoneInterface $timezone
      * @param LoggerInterface $logger
+     * @param PincodeRepositoryInterface $pincodeRepository
      */
     public function __construct(
         private ResourceConnection $resourceConnection,
         private AvailableSlotInterfaceFactory $slotFactory,
         private TimezoneInterface $timezone,
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
+        private PincodeRepositoryInterface $pincodeRepository
     ) {
-
     }
 
     /**
@@ -34,7 +35,6 @@ class SlotManagement implements SlotManagementInterface
     public function getAvailableSlots(string $pincode, string $date): array
     {
         $connection = $this->resourceConnection->getConnection();
-        $pincodeTable = $this->resourceConnection->getTableName('magecafe_delivery_pincode');
         $zoneTable = $this->resourceConnection->getTableName('magecafe_delivery_zone');
         $slotTable = $this->resourceConnection->getTableName('magecafe_delivery_slot');
         $bookingTable = $this->resourceConnection->getTableName('magecafe_delivery_slot_booking');
@@ -46,20 +46,17 @@ class SlotManagement implements SlotManagementInterface
             return [];
         }
 
-        // 1. Resolve Zone ID and Zone Reference
-        $selectZone = $connection->select()
-            ->from(['p' => $pincodeTable], ['zone_id'])
-            ->joinInner(['z' => $zoneTable], 'p.zone_id = z.entity_id', ['zone_reference'])
-            ->where('p.pincode = ?', $cleanPincode);
-
-        $zoneRow = $connection->fetchRow($selectZone);
-        if (!$zoneRow) {
+        // 1. Resolve Zone ID and Zone Reference via Range Pincode Repository
+        $zoneId = $this->pincodeRepository->getZoneIdByPincode($cleanPincode);
+        if (!$zoneId) {
             $this->logger->info(sprintf('ZoneDelivery: Pincode "%s" not mapped to any serviceable zone.', $cleanPincode));
             return [];
         }
 
-        $zoneId = (string)$zoneRow['zone_id'];
-        $zoneRef = (string)$zoneRow['zone_reference'];
+        $selectZoneRef = $connection->select()
+            ->from($zoneTable, ['zone_reference'])
+            ->where('entity_id = ?', (int)$zoneId);
+        $zoneRef = (string)$connection->fetchOne($selectZoneRef);
 
         // 2. Fetch Active Slots
         $selectSlots = $connection->select()
@@ -86,7 +83,9 @@ class SlotManagement implements SlotManagementInterface
             // Match against both Zone Reference (e.g. ZONE_REMOTE) and Zone ID (e.g. 3)
             if ($rawZones !== '') {
                 $allowedZones = array_map('trim', explode(',', $rawZones));
-                $isAllowed = in_array($zoneRef, $allowedZones, true) || in_array($zoneId, $allowedZones, true);
+                $isAllowed = in_array($zoneRef, $allowedZones, true)
+                    || in_array((string)$zoneId, $allowedZones, true)
+                    || in_array($zoneId, array_map('intval', $allowedZones), true);
                 if (!$isAllowed) {
                     continue;
                 }

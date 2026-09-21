@@ -32,16 +32,25 @@ class Pincode extends AbstractExtensibleModel implements PincodeInterface
         return $this->setData(self::ENTITY_ID, $entityId !== null ? (int)$entityId : null);
     }
 
-    public function getPincode(): ?string
+    public function getPincodeFrom()
     {
-        return $this->getData(self::PINCODE);
+        return $this->getData(self::PINCODE_FROM);
     }
 
-    public function setPincode(string $pincode): PincodeInterface
+    public function setPincodeFrom($pincodeFrom)
     {
-        return $this->setData(self::PINCODE, $pincode);
+        return $this->setData(self::PINCODE_FROM, $pincodeFrom);
     }
 
+    public function getPincodeTo()
+    {
+        return $this->getData(self::PINCODE_TO);
+    }
+
+    public function setPincodeTo($pincodeTo)
+    {
+        return $this->setData(self::PINCODE_TO, $pincodeTo);
+    }
     public function getZoneId(): ?int
     {
         $zoneId = $this->getData(self::ZONE_ID);

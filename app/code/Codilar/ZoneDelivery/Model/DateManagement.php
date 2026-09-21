@@ -4,10 +4,12 @@ declare(strict_types=1);
 namespace Codilar\ZoneDelivery\Model;
 
 use Codilar\ZoneDelivery\Api\DateManagementInterface;
+use Codilar\ZoneDelivery\Api\PincodeRepositoryInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Store\Model\ScopeInterface;
+use Psr\Log\LoggerInterface;
 
 class DateManagement implements DateManagementInterface
 {
@@ -15,19 +17,13 @@ class DateManagement implements DateManagementInterface
     private const DEFAULT_CUTOFF_TIME = '14:00:00';
     private const DATE_WINDOW_DAYS = 7;
 
-
-
-    /**
-     * @param ResourceConnection $resourceConnection
-     * @param TimezoneInterface $timezone
-     * @param ScopeConfigInterface $scopeConfig
-     */
     public function __construct(
         private ResourceConnection $resourceConnection,
         private TimezoneInterface $timezone,
-        private ScopeConfigInterface $scopeConfig
+        private ScopeConfigInterface $scopeConfig,
+        private PincodeRepositoryInterface $pincodeRepository,
+        private LoggerInterface $logger
     ) {
-
     }
 
     /**
@@ -43,14 +39,18 @@ class DateManagement implements DateManagementInterface
         $connection = $this->resourceConnection->getConnection();
         $pincodeTable = $this->resourceConnection->getTableName('magecafe_delivery_pincode');
         $zoneTable = $this->resourceConnection->getTableName('magecafe_delivery_zone');
+        $numericPincode = (int)$cleanPincode;
 
+        // Resolve Zone and Remote status safely with numeric casting for varchar/int safety
         $select = $connection->select()
             ->from(['p' => $pincodeTable], [])
             ->joinInner(['z' => $zoneTable], 'p.zone_id = z.entity_id', ['is_remote'])
-            ->where('p.pincode = ?', $cleanPincode);
+            ->where('? BETWEEN CAST(p.pincode_from AS UNSIGNED) AND CAST(p.pincode_to AS UNSIGNED)', $numericPincode)
+            ->limit(1);
 
         $zone = $connection->fetchRow($select);
         if (!$zone) {
+            $this->logger->info(sprintf('ZoneDelivery: No range match found for pincode %s', $cleanPincode));
             return [];
         }
 
@@ -64,22 +64,27 @@ class DateManagement implements DateManagementInterface
         );
         $cutoffTime = !empty($cutoffConfig) ? $cutoffConfig : self::DEFAULT_CUTOFF_TIME;
 
-        // Determine initial lead time in days
+        // Remote zone: strict 2 days later. Standard zone: Day + 1 before cutoff, Day + 2 past cutoff
         if ($isRemote) {
-            // BR-02: Next-day not available for remote. Earliest is Day + 2 (or Day + 3 if past cutoff)
-            $leadDays = ($currentTime > $cutoffTime) ? 3 : 2;
+            $leadDays = 2;
         } else {
-            // Standard zone: Day + 1 if before cutoff, Day + 2 if past cutoff
             $leadDays = ($currentTime > $cutoffTime) ? 2 : 1;
         }
+
+        $this->logger->info(sprintf(
+            'ZoneDelivery Dates -> Pincode: %s | isRemote: %d | leadDays: %d',
+            $cleanPincode,
+            $isRemote ? 1 : 0,
+            $leadDays
+        ));
 
         $availableDates = [];
         $currentTimestamp = $storeDateTime->getTimestamp();
 
         for ($i = $leadDays; count($availableDates) < self::DATE_WINDOW_DAYS; $i++) {
             $targetTimestamp = strtotime(sprintf('+%d days', $i), $currentTimestamp);
-            // Skip Sunday if deliveries are closed, otherwise add
-            $dayOfWeek = (int)date('N', $targetTimestamp); // 1 (Mon) to 7 (Sun)
+            // Skip Sunday (day of week 7)
+            $dayOfWeek = (int)date('N', $targetTimestamp);
             if ($dayOfWeek === 7) {
                 continue;
             }

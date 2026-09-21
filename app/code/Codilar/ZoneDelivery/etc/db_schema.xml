@@ -17,15 +17,13 @@
     </table>
 
     <!-- 2. Pincode to Zone Mapping Table -->
-    <table name="magecafe_delivery_pincode" resource="default" engine="innodb" comment="Pincode to Zone Mapping">
+    <table name="magecafe_delivery_pincode" resource="default" engine="innodb" comment="Pincode Range to Zone Mapping">
         <column xsi:type="int" name="entity_id" unsigned="true" nullable="false" identity="true" comment="Entity ID"/>
-        <column xsi:type="varchar" name="pincode" nullable="false" length="16" comment="Postal Code"/>
+        <column xsi:type="int" name="pincode_from" unsigned="true" nullable="false" comment="Pincode From"/>
+        <column xsi:type="int" name="pincode_to" unsigned="true" nullable="false" comment="Pincode To"/>
         <column xsi:type="int" name="zone_id" unsigned="true" nullable="false" comment="Zone Reference ID"/>
         <constraint xsi:type="primary" referenceId="PRIMARY">
             <column name="entity_id"/>
-        </constraint>
-        <constraint xsi:type="unique" referenceId="MAGECAFE_DELIVERY_PINCODE_UNIQUE">
-            <column name="pincode"/>
         </constraint>
         <constraint xsi:type="foreign" referenceId="FK_MAGECAFE_PINCODE_ZONE_ID"
                     table="magecafe_delivery_pincode" column="zone_id"

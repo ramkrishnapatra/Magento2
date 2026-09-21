@@ -12,7 +12,8 @@ use Magento\Framework\Api\ExtensibleDataInterface;
 interface PincodeInterface extends ExtensibleDataInterface
 {
     public const ENTITY_ID = 'entity_id';
-    public const PINCODE = 'pincode';
+    public const PINCODE_FROM = 'pincode_from';
+    public const PINCODE_TO = 'pincode_to';
     public const ZONE_ID = 'zone_id';
 
     /**
@@ -31,20 +32,26 @@ interface PincodeInterface extends ExtensibleDataInterface
     public function setEntityId($entityId): self;
 
     /**
-     * Get postal code
-     *
-     * @return string|null
+     * @return mixed
      */
-    public function getPincode(): ?string;
+    public function getPincodeFrom();
 
     /**
-     * Set postal code
-     *
-     * @param string $pincode
-     * @return $this
+     * @param $pincodeFrom
+     * @return mixed
      */
-    public function setPincode(string $pincode): self;
+    public function setPincodeFrom($pincodeFrom);
 
+    /**
+     * @return mixed
+     */
+    public function getPincodeTo();
+
+    /**
+     * @param $pincodeTo
+     * @return mixed
+     */
+    public function setPincodeTo($pincodeTo);
     /**
      * Get zone ID
      *

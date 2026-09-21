@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Codilar\ZoneDelivery\Model\Carrier;
 
+use Codilar\ZoneDelivery\Api\PincodeRepositoryInterface;
 use Magento\Catalog\Model\ResourceModel\Product as ProductResource;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\ResourceConnection;
@@ -40,17 +41,19 @@ class ZoneDelivery extends AbstractCarrier implements CarrierInterface
      * @param ResourceConnection $resourceConnection
      * @param ProductResource $productResource
      * @param PriceCurrencyInterface $priceCurrency
+     * @param PincodeRepositoryInterface $pincodeRepository
      * @param array $data
      */
     public function __construct(
         ScopeConfigInterface $scopeConfig,
         ErrorFactory $rateErrorFactory,
-        LoggerInterface $logger,
+        private LoggerInterface $logger,
         private ResultFactory $rateResultFactory,
         private MethodFactory $rateMethodFactory,
         private ResourceConnection $resourceConnection,
         private ProductResource $productResource,
         private PriceCurrencyInterface $priceCurrency,
+        private PincodeRepositoryInterface $pincodeRepository,
         array $data = []
     ) {
         parent::__construct($scopeConfig, $rateErrorFactory, $logger, $data);
@@ -64,6 +67,7 @@ class ZoneDelivery extends AbstractCarrier implements CarrierInterface
      */
     public function collectRates(RateRequest $request)
     {
+        $this->logger->info("hi");
         if (!$this->getConfigFlag('active')) {
             return false;
         }
@@ -73,19 +77,14 @@ class ZoneDelivery extends AbstractCarrier implements CarrierInterface
             return false;
         }
 
-        $connection = $this->resourceConnection->getConnection();
-        $pincodeTable = $this->resourceConnection->getTableName('magecafe_delivery_pincode');
-        $rateTable = $this->resourceConnection->getTableName('magecafe_delivery_rate');
-
-        // 1. Resolve Zone ID from Destination Pincode
-        $selectZone = $connection->select()
-            ->from($pincodeTable, ['zone_id'])
-            ->where('pincode = ?', $destPostcode);
-
-        $zoneId = $connection->fetchOne($selectZone);
+        // 1. Resolve Zone ID from Range Pincode Repository
+        $zoneId = $this->pincodeRepository->getZoneIdByPincode($destPostcode);
         if (!$zoneId) {
-            return false;
+            return false; // Unserviceable pincode range
         }
+
+        $connection = $this->resourceConnection->getConnection();
+        $rateTable = $this->resourceConnection->getTableName('magecafe_delivery_rate');
 
         $weight = (float)$request->getPackageWeight();
         if ($weight < 0.0) {
@@ -98,21 +97,12 @@ class ZoneDelivery extends AbstractCarrier implements CarrierInterface
         }
 
         // 2. Resolve Rate Tier based on Zone and Total Package Weight
-        $selectRate = $connection->select()
-            ->from($rateTable, ['charge', 'oversized_surcharge'])
-            ->where('zone_id = ?', (int)$zoneId)
-            ->where('weight_from <= ?', $weight)
-            ->where('weight_to >= ?', $weight)
-            ->limit(1);
+        $selectRate = $connection->select()->from($rateTable, ['charge', 'oversized_surcharge'])->where('zone_id = ?', (int)$zoneId)->where('weight_from <= ?', $weight)->where('weight_to >= ?', $weight)->limit(1);
 
         $rateData = $connection->fetchRow($selectRate);
 
         if (!$rateData) {
-            $fallbackRateSelect = $connection->select()
-                ->from($rateTable, ['charge', 'oversized_surcharge'])
-                ->where('zone_id = ?', (int)$zoneId)
-                ->order('weight_to DESC')
-                ->limit(1);
+            $fallbackRateSelect = $connection->select()->from($rateTable, ['charge', 'oversized_surcharge'])->where('zone_id = ?', (int)$zoneId)->order('weight_to DESC')->limit(1);
 
             $rateData = $connection->fetchRow($fallbackRateSelect);
         }
@@ -151,11 +141,7 @@ class ZoneDelivery extends AbstractCarrier implements CarrierInterface
                     $val = $product->getData('is_oversized');
 
                     if ($val === null && $product->getId()) {
-                        $rawVal = $this->productResource->getAttributeRawValue(
-                            (int)$product->getId(),
-                            'is_oversized',
-                            (int)$request->getStoreId()
-                        );
+                        $rawVal = $this->productResource->getAttributeRawValue((int)$product->getId(), 'is_oversized', (int)$request->getStoreId());
 
                         if (is_array($rawVal)) {
                             $val = reset($rawVal);
@@ -200,27 +186,14 @@ class ZoneDelivery extends AbstractCarrier implements CarrierInterface
 
         if ($isFreeShipping) {
             if ($totalSurcharge > 0.0) {
-                $methodTitle = sprintf(
-                    '%s (Free Base Delivery + %s Oversized Surcharge)',
-                    $baseTitle,
-                    $formattedSurcharge
-                );
+                $methodTitle = sprintf('%s (Free Base Delivery + %s Oversized Surcharge)', $baseTitle, $formattedSurcharge);
             } else {
                 $methodTitle = sprintf('%s (Free Base Delivery)', $baseTitle);
             }
         } elseif ($totalSurcharge > 0.0) {
-            $methodTitle = sprintf(
-                '%s (Base Charge: %s + %s Oversized Surcharge)',
-                $baseTitle,
-                $formattedBaseCharge,
-                $formattedSurcharge
-            );
+            $methodTitle = sprintf('%s (Base Charge: %s + %s Oversized Surcharge)', $baseTitle, $formattedBaseCharge, $formattedSurcharge);
         } else {
-            $methodTitle = sprintf(
-                '%s (Base Charge: %s)',
-                $baseTitle,
-                $formattedBaseCharge
-            );
+            $methodTitle = sprintf('%s (Base Charge: %s)', $baseTitle, $formattedBaseCharge);
         }
 
         $method->setMethodTitle($methodTitle);

@@ -69,4 +69,12 @@ interface PincodeRepositoryInterface
      * @throws CouldNotDeleteException
      */
     public function deleteById(int $pincodeId): bool;
+
+    /**
+     * Resolve Zone ID by 6-digit postal code
+     *
+     * @param int|string $pincode
+     * @return int|null
+     */
+    public function getZoneIdByPincode($pincode);
 }

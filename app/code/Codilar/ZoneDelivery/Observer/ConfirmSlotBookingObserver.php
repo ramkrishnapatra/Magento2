@@ -63,10 +63,9 @@ class ConfirmSlotBookingObserver implements ObserverInterface
         $slotTable = $this->resourceConnection->getTableName('magecafe_delivery_slot');
         $bookingTable = $this->resourceConnection->getTableName('magecafe_delivery_slot_booking');
 
-        // শুরু হচ্ছে ডাটাবেস ট্রানজ্যাকশন
         $connection->beginTransaction();
         try {
-            // ১. Pessimistic Row Lock: সংশ্লিষ্ট স্লট রো-কে এক্সক্লুসিভ লক করা
+
             $selectSlot = $connection->select()
                 ->from($slotTable, ['capacity_per_day', 'is_active'])
                 ->where('slot_id = ?', $slotId)
@@ -80,14 +79,12 @@ class ConfirmSlotBookingObserver implements ObserverInterface
 
             $totalCapacity = (int)$slotData['capacity_per_day'];
 
-            // ২. এই স্লট ও ডেটে বর্তমানে কয়টি বুকিং কনফার্ম বা রিজার্ভ আছে তা লক সহ গণনা
             $selectCount = $connection->select()
                 ->from($bookingTable, [new \Zend_Db_Expr('COUNT(*)')])
                 ->where('slot_id = ?', $slotId)
                 ->where('delivery_date = ?', $deliveryDate)
                 ->where('status IN (?)', ['confirmed', 'reserved']);
 
-            // যদি পূর্বেই এই কোটের জন্য একটি সাময়িক রিজার্ভেশন রেকর্ড থাকে, তবে সেটিকে বর্তমান গণনা থেকে বাদ দিতে হবে
             $quoteId = $quote ? (int)$quote->getId() : (int)$order->getQuoteId();
             if ($quoteId) {
                 $selectCount->where('quote_id != ?', $quoteId);
@@ -95,7 +92,6 @@ class ConfirmSlotBookingObserver implements ObserverInterface
 
             $bookedCount = (int)$connection->fetchOne($selectCount);
 
-            // ৩. কনকারেন্সি চেক: ক্যাপাসিটি শেষ হলে সাথে সাথে অর্ডার বাতিল (NFR-01 / BR-01)
             if ($bookedCount >= $totalCapacity) {
                 throw new LocalizedException(
                     __('Selected delivery slot has just been fully booked by another customer. Please select another slot.')
@@ -105,7 +101,6 @@ class ConfirmSlotBookingObserver implements ObserverInterface
             $currentTime = $this->dateTime->gmtDate();
             $orderId = (int)$order->getEntityId();
 
-            // ৪. এক্সিস্টিং রিজার্ভেশন থাকলে কনফার্ম করা, না থাকলে সরাসরি ইনসার্ট করা
             $existingReservationSelect = $connection->select()
                 ->from($bookingTable, ['booking_id'])
                 ->where('quote_id = ?', $quoteId)
@@ -137,7 +132,6 @@ class ConfirmSlotBookingObserver implements ObserverInterface
                 ]);
             }
 
-            // ট্রানজ্যাকশন সফলভাবে শেষ
             $connection->commit();
 
             $this->logger->info(sprintf(
