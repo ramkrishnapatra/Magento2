@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<form xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <item name="provider" xsi:type="string">codilar_bookingenquiry_enquiry_create.enquiry_create_data_source</item>
+        </item>
+    </argument>
+    <settings>
+        <buttons>
+            <button name="save" class="Codilar\BookingEnquiry\Block\Adminhtml\Enquiry\Edit\SaveButton"/>
+            <button name="back" class="Codilar\BookingEnquiry\Block\Adminhtml\Enquiry\Edit\BackButton"/>
+        </buttons>
+        <namespace>codilar_bookingenquiry_enquiry_create</namespace>
+        <dataScope>data</dataScope>
+        <deps>
+            <dep>codilar_bookingenquiry_enquiry_create.enquiry_create_data_source</dep>
+        </deps>
+    </settings>
+    <dataSource name="enquiry_create_data_source">
+        <argument name="dataProvider" xsi:type="configurableObject">
+            <argument name="class" xsi:type="string">Codilar\BookingEnquiry\Model\Enquiry\DataProvider</argument>
+            <argument name="name" xsi:type="string">enquiry_create_data_source</argument>
+            <argument name="primaryFieldName" xsi:type="string">entity_id</argument>
+            <argument name="requestFieldName" xsi:type="string">entity_id</argument>
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="submit_url" xsi:type="url" path="codilar_bookingenquiry/enquiry/save"/>
+                </item>
+            </argument>
+        </argument>
+        <argument name="data" xsi:type="array">
+            <item name="js_config" xsi:type="array">
+                <item name="component" xsi:type="string">Magento_Ui/js/form/provider</item>
+            </item>
+        </argument>
+    </dataSource>
+    <fieldset name="general">
+        <settings>
+            <label translate="true">General Information</label>
+        </settings>
+        <field name="phone_number" formElement="input" sortOrder="10">
+            <settings>
+                <label translate="true">Customer Phone</label>
+                <dataType>text</dataType>
+                <validation>
+                    <rule name="required-entry" xsi:type="boolean">true</rule>
+                </validation>
+            </settings>
+        </field>
+        <field name="preferred_slot" formElement="input" sortOrder="20">
+            <settings>
+                <label translate="true">Preferred Time Slot</label>
+                <dataType>text</dataType>
+                <validation>
+                    <rule name="required-entry" xsi:type="boolean">true</rule>
+                </validation>
+            </settings>
+        </field>
+        <field name="status" formElement="select" sortOrder="30">
+            <settings>
+                <label translate="true">Status</label>
+                <dataType>text</dataType>
+            </settings>
+            <formElements>
+                <select>
+                    <settings>
+                        <options class="Codilar\BookingEnquiry\Model\Enquiry\Source\Status"/>
+                    </settings>
+                </select>
+            </formElements>
+        </field>
+    </fieldset>
+</form>

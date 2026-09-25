@@ -5,7 +5,10 @@
         <resources>
             <resource id="Magento_Backend::admin">
                 <resource id="Codilar_BookingEnquiry::root" title="Booking Enquiry" sortOrder="10">
-                    <resource id="Codilar_BookingEnquiry::queue_view" title="View All Enquiries (Queue)" sortOrder="10"/>
+                    <resource id="Codilar_BookingEnquiry::queue_view" title="View All Enquiries (Queue)"
+                              sortOrder="10"/>
+                    <resource id="Codilar_BookingEnquiry::enquiry" title="Booking Enquiry"
+                              sortOrder="50"/>
                 </resource>
             </resource>
         </resources>

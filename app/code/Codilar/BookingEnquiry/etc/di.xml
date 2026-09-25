@@ -21,4 +21,26 @@
     <!-- 5. Extended Response DTO Preference (GET with Data Payload) -->
     <preference for="Codilar\BookingEnquiry\Api\Data\ResponseGetDataItemInterface"
                 type="Codilar\BookingEnquiry\Model\Api\ResponseGetDataItem"/>
+
+    <virtualType name="Codilar\BookingEnquiry\Model\ResourceModel\BookingEnquiry\Grid\Collection"
+                 type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">booking_enquiry</argument>
+            <argument name="resourceModel" xsi:type="string">
+                <!--                Codilar\Faq\Model\ResourceModel\Faq-->
+                Codilar\BookingEnquiry\Model\ResourceModel\BookingEnquiry
+
+            </argument>
+        </arguments>
+    </virtualType>
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
+        <arguments>
+            <argument name="collections" xsi:type="array">
+                <item name="codilar_bookingenquiry_enquiry_listing_data_source" xsi:type="string">
+                    <!--                    Codilar\Faq\Model\ResourceModel\Faq\Grid\Collection-->
+                    Codilar\BookingEnquiry\Model\ResourceModel\BookingEnquiry\Grid\Collection
+                </item>
+            </argument>
+        </arguments>
+    </type>
 </config>
