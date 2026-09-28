@@ -15,7 +15,7 @@
         </deps>
         <buttons>
             <button name="add">
-                <url path="*/*/create"/>
+                <url path="*/*/new"/>
                 <class>primary</class>
                 <label translate="true">Add New Enquiry</label>
             </button>

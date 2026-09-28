@@ -9,7 +9,7 @@ use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Framework\View\Result\Page;
 use Magento\Framework\View\Result\PageFactory;
 
-class Create extends Action implements HttpGetActionInterface
+class NewAction extends Action implements HttpGetActionInterface
 {
     public const ADMIN_RESOURCE = 'Codilar_BookingEnquiry::enquiry';
 
@@ -24,8 +24,7 @@ class Create extends Action implements HttpGetActionInterface
     {
         $page = $this->pageFactory->create();
         $page->setActiveMenu('Codilar_BookingEnquiry::enquiry');
-        $page->getConfig()->getTitle()->prepend(__('Create Booking Enquiry'));
-
+        $page->getConfig()->getTitle()->prepend(__('New Enquiry'));
         return $page;
     }
 }
